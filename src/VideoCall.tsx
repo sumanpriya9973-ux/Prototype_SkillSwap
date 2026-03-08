@@ -22,7 +22,7 @@ interface VideoCallProps {
 export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: VideoCallProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  const pc = useRef<RTCPeerConnection>(new RTCPeerConnection(servers));
+  const pc = useRef<RTCPeerConnection | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [isMicOn, setIsMicOn] = useState(true);
@@ -30,6 +30,7 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
 
   useEffect(() => {
     let isMounted = true;
+    pc.current = new RTCPeerConnection(servers);
 
     const setupMedia = async () => {
       try {
@@ -44,7 +45,9 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
         }
 
         stream.getTracks().forEach((track) => {
-          pc.current.addTrack(track, stream);
+          if (pc.current?.signalingState !== 'closed') {
+            pc.current?.addTrack(track, stream);
+          }
         });
 
         const rStream = new MediaStream();
@@ -53,11 +56,13 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
           remoteVideoRef.current.srcObject = rStream;
         }
 
-        pc.current.ontrack = (event) => {
-          event.streams[0].getTracks().forEach((track) => {
-            rStream.addTrack(track);
-          });
-        };
+        if (pc.current) {
+          pc.current.ontrack = (event) => {
+            event.streams[0].getTracks().forEach((track) => {
+              rStream.addTrack(track);
+            });
+          };
+        }
 
         if (isInitiator) {
           startCall();
@@ -73,9 +78,12 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
 
     setupMedia();
 
+    let hasConnected = false;
     const callDoc = doc(db, 'chats', chatId, 'call', 'current');
     const unsubscribe = onSnapshot(callDoc, (snapshot) => {
-      if (!snapshot.exists() && isMounted) {
+      if (snapshot.exists()) {
+        hasConnected = true;
+      } else if (hasConnected && isMounted) {
         // Call ended by the other party
         hangup(false);
       }
@@ -93,6 +101,7 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
     const offerCandidates = collection(callDoc, 'offerCandidates');
     const answerCandidates = collection(callDoc, 'answerCandidates');
 
+    if (!pc.current) return;
     pc.current.onicecandidate = (event) => {
       if (event.candidate) {
         addDoc(offerCandidates, event.candidate.toJSON());
@@ -111,7 +120,7 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
 
     onSnapshot(callDoc, (snapshot) => {
       const data = snapshot.data();
-      if (!pc.current.currentRemoteDescription && data?.answer) {
+      if (pc.current && !pc.current.currentRemoteDescription && data?.answer) {
         const answerDescription = new RTCSessionDescription(data.answer);
         pc.current.setRemoteDescription(answerDescription);
       }
@@ -119,7 +128,7 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
 
     onSnapshot(answerCandidates, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
+        if (change.type === 'added' && pc.current) {
           const candidate = new RTCIceCandidate(change.doc.data());
           pc.current.addIceCandidate(candidate);
         }
@@ -132,6 +141,7 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
     const offerCandidates = collection(callDoc, 'offerCandidates');
     const answerCandidates = collection(callDoc, 'answerCandidates');
 
+    if (!pc.current) return;
     pc.current.onicecandidate = (event) => {
       if (event.candidate) {
         addDoc(answerCandidates, event.candidate.toJSON());
@@ -156,7 +166,7 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
 
     onSnapshot(offerCandidates, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
+        if (change.type === 'added' && pc.current) {
           const candidate = new RTCIceCandidate(change.doc.data());
           pc.current.addIceCandidate(candidate);
         }
@@ -165,7 +175,10 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
   };
 
   const hangup = async (isUnmounting = false) => {
-    pc.current.close();
+    if (pc.current) {
+      pc.current.close();
+      pc.current = null;
+    }
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
     }
