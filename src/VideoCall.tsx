@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { db } from './firebase';
 import { doc, setDoc, getDoc, onSnapshot, collection, addDoc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { PhoneOff, Mic, MicOff, Video as VideoIcon, VideoOff } from 'lucide-react';
+import { PhoneOff, Mic, MicOff, Video as VideoIcon, VideoOff, MonitorUp, MonitorOff } from 'lucide-react';
 
 const servers = {
   iceServers: [
@@ -27,6 +27,8 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [isMicOn, setIsMicOn] = useState(true);
   const [isVideoOn, setIsVideoOn] = useState(true);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -97,11 +99,11 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
   }, []);
 
   const startCall = async () => {
+    if (!pc.current) return;
     const callDoc = doc(db, 'chats', chatId, 'call', 'current');
     const offerCandidates = collection(callDoc, 'offerCandidates');
     const answerCandidates = collection(callDoc, 'answerCandidates');
 
-    if (!pc.current) return;
     pc.current.onicecandidate = (event) => {
       if (event.candidate) {
         addDoc(offerCandidates, event.candidate.toJSON());
@@ -130,18 +132,18 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added' && pc.current) {
           const candidate = new RTCIceCandidate(change.doc.data());
-          pc.current.addIceCandidate(candidate);
+          pc.current.addIceCandidate(candidate).catch(e => console.error(e));
         }
       });
     });
   };
 
   const joinCall = async () => {
+    if (!pc.current) return;
     const callDoc = doc(db, 'chats', chatId, 'call', 'current');
     const offerCandidates = collection(callDoc, 'offerCandidates');
     const answerCandidates = collection(callDoc, 'answerCandidates');
 
-    if (!pc.current) return;
     pc.current.onicecandidate = (event) => {
       if (event.candidate) {
         addDoc(answerCandidates, event.candidate.toJSON());
@@ -168,7 +170,7 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added' && pc.current) {
           const candidate = new RTCIceCandidate(change.doc.data());
-          pc.current.addIceCandidate(candidate);
+          pc.current.addIceCandidate(candidate).catch(e => console.error(e));
         }
       });
     });
@@ -181,6 +183,9 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
     }
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
+    }
+    if (screenStream) {
+      screenStream.getTracks().forEach(track => track.stop());
     }
     
     try {
@@ -212,6 +217,57 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
     }
   };
 
+  const toggleScreenShare = async () => {
+    if (!isScreenSharing) {
+      try {
+        const sStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        const screenTrack = sStream.getVideoTracks()[0];
+        
+        if (pc.current) {
+          const sender = pc.current.getSenders().find(s => s.track?.kind === 'video');
+          if (sender) {
+            sender.replaceTrack(screenTrack);
+          }
+        }
+        
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = sStream;
+        }
+        
+        setScreenStream(sStream);
+        setIsScreenSharing(true);
+
+        screenTrack.onended = () => {
+          stopScreenShare();
+        };
+      } catch (error) {
+        console.error("Error sharing screen:", error);
+      }
+    } else {
+      stopScreenShare();
+    }
+  };
+
+  const stopScreenShare = () => {
+    if (screenStream) {
+      screenStream.getTracks().forEach(track => track.stop());
+      setScreenStream(null);
+    }
+    if (localStream) {
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (pc.current) {
+        const sender = pc.current.getSenders().find(s => s.track?.kind === 'video');
+        if (sender) {
+          sender.replaceTrack(videoTrack);
+        }
+      }
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = localStream;
+      }
+    }
+    setIsScreenSharing(false);
+  };
+
   return (
     <div className="absolute inset-0 z-50 bg-[#050505] flex flex-col rounded-[2.5rem] overflow-hidden">
       <div className="flex-1 relative bg-black">
@@ -219,7 +275,7 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
           ref={remoteVideoRef}
           autoPlay
           playsInline
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
         />
         {!remoteStream?.active && (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -236,15 +292,18 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
           />
         </div>
       </div>
-      <div className="h-24 bg-[#0a0a0a] border-t border-white/10 flex items-center justify-center gap-6">
-        <button onClick={toggleMic} className={`p-4 rounded-full transition-colors ${isMicOn ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-red-500/20 text-red-500 hover:bg-red-500/30'}`}>
-          {isMicOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+      <div className="h-24 bg-[#0a0a0a] border-t border-white/10 flex items-center justify-center gap-4 sm:gap-6">
+        <button onClick={toggleMic} className={`p-3 sm:p-4 rounded-full transition-colors ${isMicOn ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-red-500/20 text-red-500 hover:bg-red-500/30'}`}>
+          {isMicOn ? <Mic className="w-5 h-5 sm:w-6 sm:h-6" /> : <MicOff className="w-5 h-5 sm:w-6 sm:h-6" />}
         </button>
-        <button onClick={() => hangup(false)} className="p-4 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20">
-          <PhoneOff className="w-6 h-6" />
+        <button onClick={toggleVideo} className={`p-3 sm:p-4 rounded-full transition-colors ${isVideoOn ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-red-500/20 text-red-500 hover:bg-red-500/30'}`}>
+          {isVideoOn ? <VideoIcon className="w-5 h-5 sm:w-6 sm:h-6" /> : <VideoOff className="w-5 h-5 sm:w-6 sm:h-6" />}
         </button>
-        <button onClick={toggleVideo} className={`p-4 rounded-full transition-colors ${isVideoOn ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-red-500/20 text-red-500 hover:bg-red-500/30'}`}>
-          {isVideoOn ? <VideoIcon className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+        <button onClick={toggleScreenShare} className={`p-3 sm:p-4 rounded-full transition-colors ${isScreenSharing ? 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30' : 'bg-white/10 hover:bg-white/20 text-white'}`}>
+          {isScreenSharing ? <MonitorOff className="w-5 h-5 sm:w-6 sm:h-6" /> : <MonitorUp className="w-5 h-5 sm:w-6 sm:h-6" />}
+        </button>
+        <button onClick={() => hangup(false)} className="p-3 sm:p-4 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20">
+          <PhoneOff className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
       </div>
     </div>
