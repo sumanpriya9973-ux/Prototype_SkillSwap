@@ -29,6 +29,7 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+  const candidatesQueue = useRef<RTCIceCandidateInit[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -120,19 +121,28 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
 
     await setDoc(callDoc, { offer, callerId: userId });
 
-    onSnapshot(callDoc, (snapshot) => {
+    onSnapshot(callDoc, async (snapshot) => {
       const data = snapshot.data();
       if (pc.current && !pc.current.currentRemoteDescription && data?.answer) {
         const answerDescription = new RTCSessionDescription(data.answer);
-        pc.current.setRemoteDescription(answerDescription);
+        await pc.current.setRemoteDescription(answerDescription);
+        
+        candidatesQueue.current.forEach(c => {
+          pc.current?.addIceCandidate(new RTCIceCandidate(c)).catch(e => console.error(e));
+        });
+        candidatesQueue.current = [];
       }
     });
 
     onSnapshot(answerCandidates, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added' && pc.current) {
-          const candidate = new RTCIceCandidate(change.doc.data());
-          pc.current.addIceCandidate(candidate).catch(e => console.error(e));
+          const data = change.doc.data() as RTCIceCandidateInit;
+          if (pc.current.remoteDescription) {
+            pc.current.addIceCandidate(new RTCIceCandidate(data)).catch(e => console.error(e));
+          } else {
+            candidatesQueue.current.push(data);
+          }
         }
       });
     });
@@ -166,11 +176,20 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
 
     await updateDoc(callDoc, { answer });
 
+    candidatesQueue.current.forEach(c => {
+      pc.current?.addIceCandidate(new RTCIceCandidate(c)).catch(e => console.error(e));
+    });
+    candidatesQueue.current = [];
+
     onSnapshot(offerCandidates, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added' && pc.current) {
-          const candidate = new RTCIceCandidate(change.doc.data());
-          pc.current.addIceCandidate(candidate).catch(e => console.error(e));
+          const data = change.doc.data() as RTCIceCandidateInit;
+          if (pc.current.remoteDescription) {
+            pc.current.addIceCandidate(new RTCIceCandidate(data)).catch(e => console.error(e));
+          } else {
+            candidatesQueue.current.push(data);
+          }
         }
       });
     });
