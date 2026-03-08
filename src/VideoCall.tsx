@@ -119,7 +119,7 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
       type: offerDescription.type,
     };
 
-    await setDoc(callDoc, { offer, callerId: userId });
+    await setDoc(callDoc, { offer, callerId: userId, timestamp: Date.now() });
 
     onSnapshot(callDoc, async (snapshot) => {
       const data = snapshot.data();

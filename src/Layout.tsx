@@ -4,6 +4,7 @@ import { Sparkles, User, Map as MapIcon, MessageSquare, LogOut, Coins } from 'lu
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useAuth } from './AuthContext';
+import NotificationManager from './NotificationManager';
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-white/20 relative overflow-hidden">
+      <NotificationManager />
       {/* Background Glow */}
       <div className="fixed top-[-20%] left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-to-b from-white/[0.08] to-transparent blur-[120px] pointer-events-none rounded-full" />
 
