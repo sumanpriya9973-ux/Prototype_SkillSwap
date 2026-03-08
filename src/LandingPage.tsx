@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
 import { auth, googleProvider } from './firebase';
 import { signInWithPopup } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (user && !loading) {
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
 
   const handleLogin = async () => {
     try {
@@ -15,6 +23,10 @@ export default function LandingPage() {
       console.error('Error signing in:', error);
     }
   };
+
+  if (loading) {
+    return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen text-white font-sans selection:bg-white/20 relative overflow-hidden flex flex-col">
