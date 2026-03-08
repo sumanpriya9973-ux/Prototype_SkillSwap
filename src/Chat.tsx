@@ -49,6 +49,21 @@ export default function Chat() {
         const chatRef = doc(db, 'chats', generatedChatId);
         const chatSnap = await getDoc(chatRef);
         if (!chatSnap.exists()) {
+          // Check if user has enough coins
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          const userData = userDocSnap.data();
+          
+          if (!userData || (userData.coins ?? 50) < 10) {
+            alert("You need 10 Swap Coins to start a new chat!");
+            navigate('/dashboard');
+            return;
+          }
+
+          // Deduct 10 coins
+          await setDoc(userDocRef, { coins: (userData.coins ?? 50) - 10 }, { merge: true });
+
+          // Create chat
           await setDoc(chatRef, {
             participants: [user.uid, uid],
             createdAt: Date.now()

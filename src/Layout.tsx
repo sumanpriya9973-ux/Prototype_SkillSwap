@@ -1,11 +1,13 @@
 import React from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { Sparkles, User, Map as MapIcon, MessageSquare, LogOut } from 'lucide-react';
+import { Sparkles, User, Map as MapIcon, MessageSquare, LogOut, Coins } from 'lucide-react';
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
+import { useAuth } from './AuthContext';
 
 export default function Layout() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -28,6 +30,11 @@ export default function Layout() {
           </Link>
           
           <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/10 text-yellow-500 rounded-full border border-yellow-500/20 mr-2">
+              <Coins className="w-4 h-4" />
+              <span className="text-sm font-bold">{profile?.coins ?? 50}</span>
+            </div>
+
             <Link to="/dashboard" className="p-2 text-white/50 hover:text-white transition-colors rounded-full hover:bg-white/5">
               <span className="hidden sm:block text-sm font-medium">Explore</span>
               <Sparkles className="w-5 h-5 sm:hidden" />

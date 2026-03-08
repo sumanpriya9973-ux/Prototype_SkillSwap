@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
 interface UserProfile {
   uid: string;
@@ -13,6 +13,7 @@ interface UserProfile {
   contact: string;
   contactType: 'email' | 'whatsapp';
   location?: { lat: number; lng: number };
+  coins: number;
 }
 
 interface AuthContextType {
@@ -37,31 +38,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let profileUnsubscribe: () => void;
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
         try {
           const docRef = doc(db, 'users', firebaseUser.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            setProfile(docSnap.data() as UserProfile);
-          } else {
-            const newProfile: UserProfile = {
-              uid: firebaseUser.uid,
-              name: firebaseUser.displayName || 'Anonymous',
-              email: firebaseUser.email || '',
-              photoURL: firebaseUser.photoURL || '',
-              skillHave: '',
-              skillWant: '',
-              contact: firebaseUser.email || '',
-              contactType: 'email',
-            };
-            await setDoc(docRef, newProfile);
-            setProfile(newProfile);
-          }
+          
+          profileUnsubscribe = onSnapshot(docRef, async (docSnap) => {
+            if (docSnap.exists()) {
+              setProfile(docSnap.data() as UserProfile);
+              setLoading(false);
+            } else {
+              const newProfile: UserProfile = {
+                uid: firebaseUser.uid,
+                name: firebaseUser.displayName || 'Anonymous',
+                email: firebaseUser.email || '',
+                photoURL: firebaseUser.photoURL || '',
+                skillHave: '',
+                skillWant: '',
+                contact: firebaseUser.email || '',
+                contactType: 'email',
+                coins: 50,
+              };
+              await setDoc(docRef, newProfile);
+              setProfile(newProfile);
+              setLoading(false);
+            }
+          });
         } catch (error) {
           console.error("Error fetching/creating user profile:", error);
-          // Fallback profile if Firestore fails
           setProfile({
             uid: firebaseUser.uid,
             name: firebaseUser.displayName || 'Anonymous',
@@ -70,15 +77,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             skillWant: '',
             contact: firebaseUser.email || '',
             contactType: 'email',
+            coins: 50,
           });
+          setLoading(false);
         }
       } else {
         setProfile(null);
+        setLoading(false);
+        if (profileUnsubscribe) profileUnsubscribe();
       }
-      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (profileUnsubscribe) profileUnsubscribe();
+    };
   }, []);
 
   const updateProfile = async (data: Partial<UserProfile>) => {
@@ -87,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const cleanData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
       const updatedProfile = { ...profile, ...cleanData };
       await setDoc(doc(db, 'users', user.uid), updatedProfile, { merge: true });
-      setProfile(updatedProfile);
+      // We don't need to manually setProfile here anymore because onSnapshot will handle it
     } catch (error) {
       console.error("Error updating profile:", error);
       throw error;
