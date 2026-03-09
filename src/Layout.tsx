@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { Sparkles, User, Map as MapIcon, MessageSquare, LogOut, Coins, Bell } from 'lucide-react';
+import { Sparkles, User, Map as MapIcon, MessageSquare, LogOut, Coins, Bell, Menu, Settings, Info, HelpCircle, Users } from 'lucide-react';
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useAuth } from './AuthContext';
@@ -12,11 +12,22 @@ export default function Layout() {
   const { profile } = useAuth();
   const [showNotificationBanner, setShowNotificationBanner] = useState(false);
   const [isCoinStoreOpen, setIsCoinStoreOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
       setShowNotificationBanner(true);
     }
+    
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const requestNotificationPermission = async () => {
@@ -99,13 +110,57 @@ export default function Layout() {
             
             <div className="w-px h-6 bg-white/10 mx-2"></div>
             
-            <button 
-              onClick={handleLogout}
-              className="p-2 text-white/50 hover:text-red-400 transition-colors rounded-full hover:bg-white/5 cursor-pointer"
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+            <div className="relative" ref={menuRef}>
+              <button 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="p-2 text-white/50 hover:text-white transition-colors rounded-full hover:bg-white/5 cursor-pointer"
+                title="Menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              
+              {isMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 py-2">
+                  <Link 
+                    to="/match" 
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Users className="w-4 h-4" />
+                    Match
+                  </Link>
+                  <button 
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors text-left"
+                    onClick={() => { setIsMenuOpen(false); alert('Settings coming soon!'); }}
+                  >
+                    <Settings className="w-4 h-4" />
+                    Settings
+                  </button>
+                  <button 
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors text-left"
+                    onClick={() => { setIsMenuOpen(false); alert('How It Works coming soon!'); }}
+                  >
+                    <HelpCircle className="w-4 h-4" />
+                    How It Works
+                  </button>
+                  <button 
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors text-left"
+                    onClick={() => { setIsMenuOpen(false); alert('About Us coming soon!'); }}
+                  >
+                    <Info className="w-4 h-4" />
+                    About Us
+                  </button>
+                  <div className="h-px bg-white/10 my-1"></div>
+                  <button 
+                    onClick={() => { setIsMenuOpen(false); handleLogout(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors text-left"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </nav>

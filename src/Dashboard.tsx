@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Mail, MessageCircle, ArrowRight, Video } from 'lucide-react';
+import { Search, Mail, MessageCircle, ArrowRight, Video, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from './firebase';
@@ -46,8 +46,12 @@ export default function Dashboard() {
     (p.name?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
 
-  const handleConnect = (profile: UserProfile) => {
+  const handleChat = (profile: UserProfile) => {
     navigate(`/chat/${profile.uid}`);
+  };
+
+  const handleProfile = (profile: UserProfile) => {
+    navigate(`/profile/${profile.uid}`);
   };
 
   return (
@@ -85,7 +89,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <button 
-                  onClick={() => handleConnect(profile)}
+                  onClick={() => handleChat(profile)}
                   className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-white/50 group-hover:bg-white group-hover:text-black transition-colors duration-500 shrink-0 cursor-pointer"
                   title="Message"
                 >
@@ -101,11 +105,20 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div>
-                  <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-3">Wants to Learn</div>
-                  <div className="inline-flex items-center px-5 py-2.5 rounded-full border border-white/20 text-white/70 text-sm font-medium">
-                    {profile.skillWant || 'Not specified'}
+                <div className="flex justify-between items-end">
+                  <div>
+                    <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-3">Wants to Learn</div>
+                    <div className="inline-flex items-center px-5 py-2.5 rounded-full border border-white/20 text-white/70 text-sm font-medium">
+                      {profile.skillWant || 'Not specified'}
+                    </div>
                   </div>
+                  <button 
+                    onClick={() => handleProfile(profile)}
+                    className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-white/50 hover:bg-white hover:text-black transition-colors duration-500 shrink-0 cursor-pointer"
+                    title="View Profile"
+                  >
+                    <User className="w-6 h-6 transition-transform duration-500" />
+                  </button>
                 </div>
               </div>
             </motion.div>

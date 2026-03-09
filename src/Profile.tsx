@@ -124,14 +124,42 @@ export default function Profile() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Skill You Want</label>
+          <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Skills You Want to Learn (Press Enter to add)</label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {skillWant.split(',').filter(s => s.trim()).map((skill, index) => (
+              <div key={index} className="flex items-center gap-1 bg-white/10 px-3 py-1.5 rounded-full text-sm">
+                <span>{skill.trim()}</span>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    const skills = skillWant.split(',').filter(s => s.trim());
+                    skills.splice(index, 1);
+                    setSkillWant(skills.join(', '));
+                  }}
+                  className="text-white/50 hover:text-white ml-1"
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
+          </div>
           <input
-            required
             type="text"
-            value={skillWant}
-            onChange={e => setSkillWant(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const value = e.currentTarget.value.trim();
+                if (value) {
+                  const currentSkills = skillWant.split(',').filter(s => s.trim());
+                  if (!currentSkills.includes(value)) {
+                    setSkillWant(currentSkills.length > 0 ? `${skillWant}, ${value}` : value);
+                  }
+                  e.currentTarget.value = '';
+                }
+              }
+            }}
             className="w-full bg-[#111] border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
-            placeholder="e.g. Product Design"
+            placeholder="Type a skill and press Enter..."
           />
         </div>
 

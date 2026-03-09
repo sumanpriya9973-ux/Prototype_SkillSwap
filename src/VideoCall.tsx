@@ -29,6 +29,7 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+  const [hasRemoteUserJoined, setHasRemoteUserJoined] = useState(false);
   const candidatesQueue = useRef<RTCIceCandidateInit[]>([]);
 
   useEffect(() => {
@@ -64,6 +65,7 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
             event.streams[0].getTracks().forEach((track) => {
               rStream.addTrack(track);
             });
+            setHasRemoteUserJoined(true);
           };
         }
 
@@ -302,9 +304,11 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
           playsInline
           className="w-full h-full object-contain"
         />
-        {!remoteStream?.active && (
+        {!hasRemoteUserJoined && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-white/50 animate-pulse">Waiting for other user to join...</p>
+            <p className="text-white/50 animate-pulse">
+              {isInitiator ? "Waiting for other user to join..." : "Connecting to call..."}
+            </p>
           </div>
         )}
         <div className="absolute top-6 right-6 w-32 h-48 sm:w-48 sm:h-72 bg-gray-900 rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl z-10">
