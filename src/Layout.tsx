@@ -5,11 +5,13 @@ import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useAuth } from './AuthContext';
 import NotificationManager from './NotificationManager';
+import CoinStore from './CoinStore';
 
 export default function Layout() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [showNotificationBanner, setShowNotificationBanner] = useState(false);
+  const [isCoinStoreOpen, setIsCoinStoreOpen] = useState(false);
 
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -70,10 +72,13 @@ export default function Layout() {
           </Link>
           
           <div className="flex items-center gap-2 sm:gap-4">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/10 text-yellow-500 rounded-full border border-yellow-500/20 mr-2">
+            <button 
+              onClick={() => setIsCoinStoreOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/10 text-yellow-500 rounded-full border border-yellow-500/20 mr-2 hover:bg-yellow-500/20 transition-colors cursor-pointer"
+            >
               <Coins className="w-4 h-4" />
               <span className="text-sm font-bold">{profile?.coins ?? 50}</span>
-            </div>
+            </button>
 
             <Link to="/dashboard" className="p-2 text-white/50 hover:text-white transition-colors rounded-full hover:bg-white/5">
               <span className="hidden sm:block text-sm font-medium">Explore</span>
@@ -108,6 +113,8 @@ export default function Layout() {
       <main className="pt-24 pb-24 px-6 max-w-7xl mx-auto relative z-10">
         <Outlet />
       </main>
+
+      {isCoinStoreOpen && <CoinStore onClose={() => setIsCoinStoreOpen(false)} />}
     </div>
   );
 }

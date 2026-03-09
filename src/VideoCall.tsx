@@ -239,6 +239,11 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
   const toggleScreenShare = async () => {
     if (!isScreenSharing) {
       try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+          alert("Screen sharing is not supported on this browser or device. If you are using a mobile device, screen sharing may not be available.");
+          return;
+        }
+
         const sStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
         const screenTrack = sStream.getVideoTracks()[0];
         
@@ -261,6 +266,7 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
         };
       } catch (error) {
         console.error("Error sharing screen:", error);
+        alert("Could not start screen sharing. Please check your browser permissions.");
       }
     } else {
       stopScreenShare();
