@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { Sparkles, User, Map as MapIcon, MessageSquare, LogOut, Coins } from 'lucide-react';
+import { Sparkles, User, Map as MapIcon, MessageSquare, LogOut, Coins, Bell } from 'lucide-react';
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useAuth } from './AuthContext';
@@ -9,6 +9,22 @@ import NotificationManager from './NotificationManager';
 export default function Layout() {
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const [showNotificationBanner, setShowNotificationBanner] = useState(false);
+
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      setShowNotificationBanner(true);
+    }
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        setShowNotificationBanner(false);
+      }
+    }
+  };
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -20,6 +36,28 @@ export default function Layout() {
       <NotificationManager />
       {/* Background Glow */}
       <div className="fixed top-[-20%] left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-to-b from-white/[0.08] to-transparent blur-[120px] pointer-events-none rounded-full" />
+
+      {/* Notification Banner */}
+      {showNotificationBanner && (
+        <div className="fixed top-20 left-0 w-full bg-emerald-500/10 border-b border-emerald-500/20 z-30 flex items-center justify-center px-6 py-3 backdrop-blur-md">
+          <div className="flex items-center gap-3 text-emerald-400 text-sm font-medium">
+            <Bell className="w-4 h-4" />
+            <span>Enable notifications to get alerts for new messages and calls.</span>
+            <button 
+              onClick={requestNotificationPermission}
+              className="ml-2 bg-emerald-500 text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-emerald-600 transition-colors cursor-pointer"
+            >
+              Enable
+            </button>
+            <button 
+              onClick={() => setShowNotificationBanner(false)}
+              className="ml-1 text-emerald-400/50 hover:text-emerald-400 px-2 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Navbar */}
       <nav className="fixed top-0 w-full border-b border-white/5 bg-[#050505]/80 backdrop-blur-2xl z-40">

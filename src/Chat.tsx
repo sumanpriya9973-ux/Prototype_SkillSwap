@@ -184,7 +184,7 @@ export default function Chat() {
             <ArrowLeft className="w-5 h-5 text-white/70" />
           </button>
           <div>
-            <h3 className="text-xl font-medium tracking-tight">{otherUser?.name || 'Loading...'}</h3>
+            <h3 className="text-xl font-medium tracking-tight">{otherUser?.name || 'Connecting...'}</h3>
             <p className="text-xs text-white/40 uppercase tracking-widest font-semibold">
               {otherUser?.skillHave}
             </p>

@@ -4,6 +4,7 @@ import { auth, googleProvider } from './firebase';
 import { signInWithPopup } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import LoadingScreen from './LoadingScreen';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ export default function LandingPage() {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white">Loading...</div>;
+    return <LoadingScreen />;
   }
 
   return (

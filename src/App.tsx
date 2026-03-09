@@ -8,10 +8,11 @@ import Profile from './Profile';
 import Chat from './Chat';
 import ChatList from './ChatList';
 import MapView from './Map';
+import LoadingScreen from './LoadingScreen';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white">Loading...</div>;
+  if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/" />;
   return <>{children}</>;
 };

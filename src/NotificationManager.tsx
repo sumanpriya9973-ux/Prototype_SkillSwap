@@ -13,11 +13,6 @@ export default function NotificationManager() {
   useEffect(() => {
     if (!user) return;
 
-    // Request notification permission
-    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-      Notification.requestPermission();
-    }
-
     const q = query(collection(db, 'chats'), where('participants', 'array-contains', user.uid));
     
     const unsubscribeChats = onSnapshot(q, (querySnapshot) => {
