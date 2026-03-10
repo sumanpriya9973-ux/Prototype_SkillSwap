@@ -1,5 +1,10 @@
 {
   "name": "Skill Swap",
   "description": "A platform to exchange skills for free with other users.",
-  "requestFramePermissions": ["camera", "microphone", "geolocation", "display-capture", "notifications"]
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation",
+    "display-capture"
+  ]
 }

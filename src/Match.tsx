@@ -106,9 +106,9 @@ export default function Match() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="group relative p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 transition-all duration-500 flex flex-col"
               >
-                <div className="flex justify-between items-start mb-10">
-                  <div>
-                    <h3 className="text-3xl font-medium tracking-tight mb-2">{match.name}</h3>
+                <div className="flex justify-between items-start gap-4 mb-10">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-3xl font-medium tracking-tight mb-2 break-words">{match.name}</h3>
                     <div className="flex items-center gap-1.5 text-xs text-emerald-400 uppercase tracking-widest font-semibold">
                       Perfect Match
                     </div>
@@ -125,7 +125,7 @@ export default function Match() {
                 <div className="space-y-8 flex-grow">
                   <div>
                     <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-3">Can Teach You</div>
-                    <div className="inline-flex items-center px-5 py-2.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-sm font-medium">
+                    <div className="inline-flex items-center px-5 py-2.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-sm font-medium break-words max-w-full">
                       {match.skillHave}
                     </div>
                   </div>

@@ -104,145 +104,104 @@ export default function UserProfileView() {
     : 'No ratings yet';
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 py-6">
       <button 
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-white/50 hover:text-white mb-8 transition-colors"
+        className="flex items-center gap-2 text-white/50 hover:text-white mb-8 transition-colors text-sm font-medium"
       >
         <ArrowLeft className="w-4 h-4" />
         Back
       </button>
 
-      <div className="bg-white/[0.03] border border-white/5 p-8 md:p-10 rounded-[2.5rem] mb-8">
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h2 className="text-4xl font-medium tracking-tight mb-2">{profile.name}</h2>
-            <div className="flex items-center gap-4 text-sm text-white/50">
-              <div className="flex items-center gap-1.5 uppercase tracking-widest font-semibold">
-                {profile.contactType === 'email' ? <Mail className="w-3.5 h-3.5" /> : <MessageCircle className="w-3.5 h-3.5" />}
-                {profile.contactType}
-              </div>
-              <div className="flex items-center gap-1 text-yellow-500">
-                <Star className="w-4 h-4 fill-current" />
-                <span>{averageRating}</span>
-                <span className="text-white/30 ml-1">({reviews.length} reviews)</span>
+      {/* Top Section */}
+      <div className="mb-12">
+        <div className="flex flex-row gap-6 sm:gap-10">
+          {/* Left Column */}
+          <div className="w-24 sm:w-32 shrink-0 flex flex-col items-center gap-5">
+            {/* Profile Picture Placeholder */}
+            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-white/10 to-transparent border border-white/10 shadow-xl flex items-center justify-center overflow-hidden shrink-0">
+              <div className="text-4xl sm:text-5xl font-medium text-white/60">
+                {profile.name.charAt(0).toUpperCase()}
               </div>
             </div>
-          </div>
-          {user?.uid !== uid && (
-            <button 
-              onClick={() => navigate(`/chat/${uid}`)}
-              className="flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-semibold hover:scale-105 transition-transform"
-            >
-              <MessageCircle className="w-5 h-5" />
-              Message
-            </button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-3">Can Teach</div>
-            <div className="inline-flex items-center px-5 py-2.5 rounded-full bg-white/10 border border-white/10 text-sm font-medium">
-              {profile.skillHave || 'Not specified'}
+            
+            {/* Ratings */}
+            <div className="flex flex-col items-center text-center">
+              <div className="text-[10px] sm:text-xs uppercase tracking-widest font-bold text-white/40 mb-1.5">Ratings</div>
+              <div className="flex items-center gap-1 text-yellow-400 mb-1.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${i < Math.round(Number(averageRating) || 0) ? 'fill-current' : 'text-white/10'}`} />
+                ))}
+              </div>
+              <div className="text-sm font-semibold text-white/90">
+                {averageRating !== 'No ratings yet' ? averageRating : '0'}
+              </div>
+              <div className="text-xs text-white/40 mt-0.5">({reviews.length} reviews)</div>
             </div>
           </div>
 
-          <div>
-            <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-3">Wants to Learn</div>
-            <div className="flex flex-wrap gap-2">
-              {profile.skillWant ? profile.skillWant.split(',').map((skill, i) => (
-                <div key={i} className="inline-flex items-center px-5 py-2.5 rounded-full border border-white/20 text-white/70 text-sm font-medium">
-                  {skill.trim()}
-                </div>
-              )) : (
-                <div className="inline-flex items-center px-5 py-2.5 rounded-full border border-white/20 text-white/70 text-sm font-medium">
-                  Not specified
-                </div>
+          {/* Right Column */}
+          <div className="flex-1 flex flex-col gap-5 sm:gap-6 pt-1 sm:pt-2">
+            {/* Name */}
+            <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight text-white/90 break-words">{profile.name}</h2>
+            
+            {/* Contact Type & Message */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full text-white/80 text-sm">
+                {profile.contactType === 'email' ? <Mail className="w-4 h-4" /> : <MessageCircle className="w-4 h-4" />}
+                <span className="capitalize font-medium">{profile.contactType}</span>
+              </div>
+              
+              {user?.uid !== uid && (
+                <button 
+                  onClick={() => navigate(`/chat/${uid}`)}
+                  className="ml-1 flex items-center gap-2 px-5 py-2 rounded-full bg-white text-black text-sm font-semibold hover:scale-105 transition-transform shadow-lg"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Message
+                </button>
               )}
+            </div>
+
+            {/* Skills */}
+            <div className="grid grid-cols-2 gap-4 sm:gap-8 mt-4 sm:mt-6">
+              <div className="pl-4 border-l border-white/10">
+                <div className="text-[10px] sm:text-xs uppercase tracking-widest font-bold mb-1.5 sm:mb-2 text-white/40">Can Teach</div>
+                <div className="text-base sm:text-xl font-medium text-white/90 break-words">
+                  {profile.skillHave || 'Not specified'}
+                </div>
+              </div>
+              <div className="pl-4 border-l border-white/10">
+                <div className="text-[10px] sm:text-xs uppercase tracking-widest font-bold mb-1.5 sm:mb-2 text-white/40">Wants to Learn</div>
+                <div className="text-base sm:text-xl font-medium text-white/90 break-words">
+                  {profile.skillWant || 'Not specified'}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white/[0.03] border border-white/5 p-8 md:p-10 rounded-[2.5rem]">
-        <h3 className="text-2xl font-medium tracking-tight mb-8">Reviews</h3>
+      {/* Bottom Section */}
+      <div className="pt-10 border-t border-white/10">
+        <h3 className="text-2xl font-semibold tracking-tight mb-8 text-white/90">Reviews</h3>
         
-        {user?.uid !== uid && (
-          <div className="mb-10">
-            {!isWritingReview ? (
-              <button
-                onClick={() => setIsWritingReview(true)}
-                className="px-6 py-3 rounded-xl bg-white text-black font-semibold hover:scale-105 transition-transform"
-              >
-                Write a review or rate
-              </button>
-            ) : (
-              <form onSubmit={handleSubmitReview} className="space-y-4">
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold mb-2 block">Rating</label>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setRating(star)}
-                        className={`p-1 ${rating >= star ? 'text-yellow-500' : 'text-white/20'} hover:text-yellow-400 transition-colors`}
-                      >
-                        <Star className={`w-8 h-8 ${rating >= star ? 'fill-current' : ''}`} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold mb-2 block">Review</label>
-                  <textarea
-                    required
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    className="w-full bg-[#111] border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors min-h-[100px]"
-                    placeholder="Write your review here..."
-                  />
-                </div>
-                <div className="flex items-center gap-4">
-                  <button
-                    type="submit"
-                    disabled={submittingReview}
-                    className="px-6 py-3 rounded-xl bg-white text-black font-semibold hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100"
-                  >
-                    {submittingReview ? 'Submitting...' : 'Submit Review'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsWritingReview(false);
-                      setComment('');
-                      setRating(5);
-                    }}
-                    className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        )}
-
-        <div className="space-y-6">
+        <div className="space-y-4 mb-8">
           {reviews.length === 0 ? (
-            <p className="text-white/40 text-center py-8">No reviews yet.</p>
+            <div className="text-white/40 py-8 text-center bg-white/[0.02] border border-white/5 rounded-2xl">
+              No reviews yet
+            </div>
           ) : (
             reviews.map((review) => (
-              <div key={review.id} className="bg-[#111] border border-white/5 p-6 rounded-2xl">
-                <div className="flex justify-between items-start mb-4">
+              <div key={review.id} className="bg-white/[0.02] border border-white/5 p-5 sm:p-6 rounded-2xl transition-colors hover:bg-white/[0.03]">
+                <div className="flex justify-between items-start mb-3">
                   <div>
-                    <div className="font-medium">{review.reviewerName}</div>
+                    <div className="font-medium text-base text-white/90">{review.reviewerName}</div>
                     <div className="text-xs text-white/40 mt-1">
                       {review.createdAt?.toDate ? review.createdAt.toDate().toLocaleDateString() : 'Just now'}
                     </div>
                   </div>
-                  <div className="flex text-yellow-500">
+                  <div className="flex text-yellow-400">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-current' : 'text-white/10'}`} />
                     ))}
@@ -253,6 +212,67 @@ export default function UserProfileView() {
             ))
           )}
         </div>
+
+        {user?.uid !== uid && (
+          <div className="flex justify-end mt-8">
+            {!isWritingReview ? (
+              <button
+                onClick={() => setIsWritingReview(true)}
+                className="px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold hover:scale-105 transition-transform shadow-lg"
+              >
+                Write a Review
+              </button>
+            ) : (
+              <form onSubmit={handleSubmitReview} className="w-full max-w-lg ml-auto bg-white/[0.02] border border-white/5 p-6 sm:p-8 rounded-3xl space-y-6 shadow-xl">
+                <div>
+                  <label className="text-xs uppercase tracking-widest text-white/50 font-bold mb-3 block">Rating</label>
+                  <div className="flex gap-1.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setRating(star)}
+                        className={`p-1 ${rating >= star ? 'text-yellow-400' : 'text-white/10'} hover:text-yellow-300 transition-colors`}
+                      >
+                        <Star className={`w-7 h-7 ${rating >= star ? 'fill-current' : ''}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs uppercase tracking-widest text-white/50 font-bold mb-3 block">Review</label>
+                  <textarea
+                    required
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/40 transition-colors min-h-[120px]"
+                    placeholder="Write your review here..."
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsWritingReview(false);
+                      setComment('');
+                      setRating(5);
+                    }}
+                    className="px-6 py-2.5 rounded-full bg-transparent hover:bg-white/10 text-white text-sm font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingReview}
+                    className="px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100 shadow-lg"
+                  >
+                    {submittingReview ? 'Submitting...' : 'Submit'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

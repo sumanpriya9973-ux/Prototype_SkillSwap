@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import { MapPin } from 'lucide-react';
+import { MapPin, User, Mail, MessageCircle, Edit2, Coins, ChevronRight, Star, Shield, LogOut, ArrowLeft } from 'lucide-react';
+import { auth } from './firebase';
+import { signOut } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
   const { profile, updateProfile } = useAuth();
+  const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
+  
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [contactType, setContactType] = useState<'email' | 'whatsapp'>('email');
@@ -40,7 +46,7 @@ export default function Profile() {
       }
 
       await updateProfile(profileData);
-      alert('Profile updated successfully!');
+      setIsEditing(false);
     } catch (error) {
       alert('Failed to update profile. Please try again.');
     } finally {
@@ -67,9 +73,112 @@ export default function Profile() {
     }
   };
 
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate('/');
+  };
+
+  if (!isEditing) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="flex flex-col items-center mb-12">
+          <div className="w-32 h-32 bg-white/5 border border-white/10 rounded-full flex items-center justify-center mb-6 relative group">
+            <User className="w-12 h-12 text-white/50" />
+            <button 
+              onClick={() => setIsEditing(true)} 
+              className="absolute bottom-0 right-0 w-10 h-10 bg-white text-black rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg cursor-pointer"
+            >
+              <Edit2 className="w-4 h-4" />
+            </button>
+          </div>
+          <h2 className="text-3xl font-medium tracking-tight mb-2">{profile?.name || 'Your Name'}</h2>
+          <div className="flex items-center gap-2 text-white/50 text-sm">
+            {profile?.contactType === 'email' ? <Mail className="w-4 h-4" /> : <MessageCircle className="w-4 h-4" />}
+            {profile?.contact || 'Add contact info'}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 mb-10">
+          <div className="bg-white/[0.03] border border-white/5 p-6 rounded-[2rem] flex flex-col items-center justify-center text-center">
+            <div className="w-12 h-12 bg-yellow-500/10 text-yellow-500 rounded-full flex items-center justify-center mb-4">
+              <Coins className="w-6 h-6" />
+            </div>
+            <div className="text-2xl font-medium mb-1">{profile?.coins ?? 50}</div>
+            <div className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Skill Coins</div>
+          </div>
+          <div className="bg-white/[0.03] border border-white/5 p-6 rounded-[2rem] flex flex-col items-center justify-center text-center">
+            <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mb-4">
+              <Star className="w-6 h-6" />
+            </div>
+            <div className="text-2xl font-medium mb-1">5.0</div>
+            <div className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Average Rating</div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="text-[10px] uppercase tracking-widest text-white/40 font-bold mb-4 px-4">Profile Settings</div>
+          
+          <button 
+            onClick={() => setIsEditing(true)} 
+            className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-3xl flex items-center justify-between hover:bg-white/[0.06] transition-colors group cursor-pointer"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-white/70 group-hover:text-white group-hover:bg-white/10 transition-colors">
+                <User className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <div className="font-medium text-white text-lg">Personal Information</div>
+                <div className="text-sm text-white/40 mt-0.5">Name, contact, and location</div>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-white/30 group-hover:text-white/70 transition-colors" />
+          </button>
+
+          <button 
+            onClick={() => setIsEditing(true)} 
+            className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-3xl flex items-center justify-between hover:bg-white/[0.06] transition-colors group cursor-pointer"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-white/70 group-hover:text-white group-hover:bg-white/10 transition-colors">
+                <Shield className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <div className="font-medium text-white text-lg">Skills & Preferences</div>
+                <div className="text-sm text-white/40 mt-0.5">What you teach and want to learn</div>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-white/30 group-hover:text-white/70 transition-colors" />
+          </button>
+
+          <button 
+            onClick={handleLogout} 
+            className="w-full bg-red-500/5 border border-red-500/10 p-5 rounded-3xl flex items-center justify-between hover:bg-red-500/10 transition-colors group mt-8 cursor-pointer"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center text-red-400 group-hover:text-red-300 group-hover:bg-red-500/20 transition-colors">
+                <LogOut className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <div className="font-medium text-red-400 text-lg">Log Out</div>
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-4xl font-medium tracking-tight mb-10">Your Profile</h2>
+      <button 
+        onClick={() => setIsEditing(false)}
+        className="flex items-center gap-2 text-white/50 hover:text-white mb-8 transition-colors cursor-pointer"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Profile
+      </button>
+
+      <h2 className="text-4xl font-medium tracking-tight mb-10">Edit Profile</h2>
       
       <form onSubmit={handleSubmit} className="space-y-8 bg-white/[0.03] border border-white/5 p-8 md:p-10 rounded-[2.5rem]">
         <div className="space-y-2">
@@ -136,7 +245,7 @@ export default function Profile() {
                     skills.splice(index, 1);
                     setSkillWant(skills.join(', '));
                   }}
-                  className="text-white/50 hover:text-white ml-1"
+                  className="text-white/50 hover:text-white ml-1 cursor-pointer"
                 >
                   &times;
                 </button>

@@ -80,12 +80,12 @@ export default function Dashboard() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="group relative p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 transition-all duration-500 flex flex-col"
             >
-              <div className="flex justify-between items-start mb-10">
-                <div>
-                  <h3 className="text-3xl font-medium tracking-tight mb-2">{profile.name}</h3>
+              <div className="flex justify-between items-start gap-4 mb-10">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-3xl font-medium tracking-tight mb-2 break-words">{profile.name}</h3>
                   <div className="flex items-center gap-1.5 text-xs text-white/40 uppercase tracking-widest font-semibold">
-                    {profile.contactType === 'email' ? <Mail className="w-3.5 h-3.5" /> : <MessageCircle className="w-3.5 h-3.5" />}
-                    {profile.contactType}
+                    {profile.contactType === 'email' ? <Mail className="w-3.5 h-3.5 shrink-0" /> : <MessageCircle className="w-3.5 h-3.5 shrink-0" />}
+                    <span className="truncate">{profile.contactType}</span>
                   </div>
                 </div>
                 <button 
@@ -100,15 +100,15 @@ export default function Dashboard() {
               <div className="space-y-8 flex-grow">
                 <div>
                   <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-3">Can Teach</div>
-                  <div className="inline-flex items-center px-5 py-2.5 rounded-full bg-white/10 border border-white/10 text-sm font-medium">
+                  <div className="inline-flex items-center px-5 py-2.5 rounded-full bg-white/10 border border-white/10 text-sm font-medium break-words max-w-full">
                     {profile.skillHave || 'Not specified'}
                   </div>
                 </div>
 
-                <div className="flex justify-between items-end">
-                  <div>
+                <div className="flex justify-between items-end gap-4">
+                  <div className="min-w-0 flex-1">
                     <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-3">Wants to Learn</div>
-                    <div className="inline-flex items-center px-5 py-2.5 rounded-full border border-white/20 text-white/70 text-sm font-medium">
+                    <div className="inline-flex items-center px-5 py-2.5 rounded-full border border-white/20 text-white/70 text-sm font-medium break-words max-w-full">
                       {profile.skillWant || 'Not specified'}
                     </div>
                   </div>
