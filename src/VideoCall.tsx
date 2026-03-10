@@ -50,7 +50,17 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
 
         stream.getTracks().forEach((track) => {
           if (pc.current?.signalingState !== 'closed') {
-            pc.current?.addTrack(track, stream);
+            const sender = pc.current?.addTrack(track, stream);
+            if (track.kind === 'video' && sender) {
+              try {
+                const params = sender.getParameters();
+                // @ts-ignore - degradationPreference might not be in all TS DOM lib versions
+                params.degradationPreference = 'maintain-framerate';
+                sender.setParameters(params).catch(e => console.error("Error setting sender parameters:", e));
+              } catch (e) {
+                console.error("Could not set degradation preference", e);
+              }
+            }
           }
         });
 
@@ -253,6 +263,14 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
           const sender = pc.current.getSenders().find(s => s.track?.kind === 'video');
           if (sender) {
             sender.replaceTrack(screenTrack);
+            try {
+              const params = sender.getParameters();
+              // @ts-ignore
+              params.degradationPreference = 'maintain-resolution';
+              sender.setParameters(params).catch(e => console.error(e));
+            } catch (e) {
+              console.error("Could not set degradation preference", e);
+            }
           }
         }
         
@@ -286,6 +304,14 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
         const sender = pc.current.getSenders().find(s => s.track?.kind === 'video');
         if (sender) {
           sender.replaceTrack(videoTrack);
+          try {
+            const params = sender.getParameters();
+            // @ts-ignore
+            params.degradationPreference = 'maintain-framerate';
+            sender.setParameters(params).catch(e => console.error(e));
+          } catch (e) {
+            console.error("Could not set degradation preference", e);
+          }
         }
       }
       if (localVideoRef.current) {

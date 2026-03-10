@@ -141,21 +141,16 @@ export default function UserProfileView() {
           </div>
 
           {/* Right Column */}
-          <div className="flex-1 flex flex-col gap-5 sm:gap-6 pt-1 sm:pt-2">
+          <div className="flex-1 flex flex-col gap-5 sm:gap-6 pt-1 sm:pt-2 min-w-0">
             {/* Name */}
-            <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight text-white/90 break-words">{profile.name}</h2>
+            <h2 className="text-3xl font-medium tracking-tight text-white/90 truncate">{profile.name.split(' ')[0]}</h2>
             
             {/* Contact Type & Message */}
             <div className="flex flex-wrap items-center gap-3">
-              <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full text-white/80 text-sm">
-                {profile.contactType === 'email' ? <Mail className="w-4 h-4" /> : <MessageCircle className="w-4 h-4" />}
-                <span className="capitalize font-medium">{profile.contactType}</span>
-              </div>
-              
               {user?.uid !== uid && (
                 <button 
                   onClick={() => navigate(`/chat/${uid}`)}
-                  className="ml-1 flex items-center gap-2 px-5 py-2 rounded-full bg-white text-black text-sm font-semibold hover:scale-105 transition-transform shadow-lg"
+                  className="flex items-center gap-2 px-5 py-2 rounded-full bg-white text-black text-sm font-semibold hover:scale-105 transition-transform shadow-lg"
                 >
                   <MessageCircle className="w-4 h-4" />
                   Message
@@ -165,15 +160,15 @@ export default function UserProfileView() {
 
             {/* Skills */}
             <div className="grid grid-cols-2 gap-4 sm:gap-8 mt-4 sm:mt-6">
-              <div className="pl-4 border-l border-white/10">
+              <div className="pl-4 border-l border-white/10 min-w-0">
                 <div className="text-[10px] sm:text-xs uppercase tracking-widest font-bold mb-1.5 sm:mb-2 text-white/40">Can Teach</div>
-                <div className="text-base sm:text-xl font-medium text-white/90 break-words">
+                <div className="text-base sm:text-xl font-medium text-white/90 truncate">
                   {profile.skillHave || 'Not specified'}
                 </div>
               </div>
-              <div className="pl-4 border-l border-white/10">
+              <div className="pl-4 border-l border-white/10 min-w-0">
                 <div className="text-[10px] sm:text-xs uppercase tracking-widest font-bold mb-1.5 sm:mb-2 text-white/40">Wants to Learn</div>
-                <div className="text-base sm:text-xl font-medium text-white/90 break-words">
+                <div className="text-base sm:text-xl font-medium text-white/90 truncate">
                   {profile.skillWant || 'Not specified'}
                 </div>
               </div>
