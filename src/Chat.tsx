@@ -205,7 +205,7 @@ export default function Chat() {
       xhr.onload = async () => {
         if (xhr.status === 200) {
           const response = JSON.parse(xhr.responseText);
-          const downloadURL = response.data.url;
+          const downloadURL = response.data.url.replace(/^http:\/\//i, 'https://');
           
           await addDoc(collection(db, 'chats', chatId, 'messages'), {
             text: '',
@@ -253,8 +253,8 @@ export default function Chat() {
           try {
             const response = JSON.parse(xhr.responseText);
             // tmpfiles returns a viewing URL like https://tmpfiles.org/12345/vid.mp4
-            // We need to inject '/dl/' to get the direct raw media stream
-            const downloadURL = response.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+            // We need to inject '/dl/' to get the direct raw media stream and ensure https
+            const downloadURL = response.data.url.replace(/^http:\/\//i, 'https://').replace('tmpfiles.org/', 'tmpfiles.org/dl/');
             
             await addDoc(collection(db, 'chats', chatId, 'messages'), {
               text: '',
