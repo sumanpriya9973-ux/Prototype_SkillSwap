@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { db, storage } from './firebase';
+import { db } from './firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Send, Video, ArrowLeft, Paperclip, X, Download, Image as ImageIcon, Play, Clock } from 'lucide-react';
 import VideoCall from './VideoCall';
 
@@ -133,12 +132,7 @@ export default function Chat() {
       messages.forEach(async (msg) => {
         if (msg.expiresAt && msg.expiresAt < now) {
           try {
-            // Delete from storage
-            if (msg.mediaPath) {
-              const mediaRef = ref(storage, msg.mediaPath);
-              await deleteObject(mediaRef).catch(e => console.log("Storage delete error (might already be deleted):", e));
-            }
-            // Delete from firestore
+            // Delete from firestore (ImgBB handles auto-deletion of the image itself)
             await deleteDoc(doc(db, 'chats', chatId, 'messages', msg.id));
           } catch (error) {
             console.error("Error deleting expired media:", error);
@@ -176,6 +170,7 @@ export default function Chat() {
 
     const isImage = file.type.startsWith('image/');
     const isVideo = file.type.startsWith('video/');
+    
     if (!isImage && !isVideo) {
       alert('Only images and videos are supported.');
       return;
@@ -183,42 +178,116 @@ export default function Chat() {
 
     setIsUploading(true);
     setUploadProgress(0);
-    
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const path = `chat-media/${chatId}/${fileName}`;
-    const storageRef = ref(storage, path);
 
-    const uploadTask = uploadBytesResumable(storageRef, file);
-
-    uploadTask.on('state_changed', 
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setUploadProgress(progress);
-      },
-      (error) => {
-        console.error("Upload failed:", error);
+    if (isImage) {
+      const apiKey = import.meta.env.VITE_IMGBB_API_KEY;
+      if (!apiKey) {
+        alert('ImgBB API key is missing. Please add VITE_IMGBB_API_KEY to your .env file.');
         setIsUploading(false);
-        alert("Failed to upload file.");
-      },
-      async () => {
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        
-        await addDoc(collection(db, 'chats', chatId, 'messages'), {
-          text: '',
-          senderId: user.uid,
-          timestamp: Date.now(),
-          mediaUrl: downloadURL,
-          mediaType: isImage ? 'image' : 'video',
-          mediaPath: path,
-          expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes from now
-        });
-        
-        setIsUploading(false);
-        setUploadProgress(0);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
       }
-    );
+      
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('expiration', '600'); // 10 minutes in seconds
+      formData.append('key', apiKey);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', 'https://api.imgbb.com/1/upload', true);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = (event.loaded / event.total) * 100;
+          setUploadProgress(progress);
+        }
+      };
+
+      xhr.onload = async () => {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          const downloadURL = response.data.url;
+          
+          await addDoc(collection(db, 'chats', chatId, 'messages'), {
+            text: '',
+            senderId: user.uid,
+            timestamp: Date.now(),
+            mediaUrl: downloadURL,
+            mediaType: 'image',
+            expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes from now
+          });
+          
+          setIsUploading(false);
+          setUploadProgress(0);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        } else {
+          console.error("Upload failed:", xhr.responseText);
+          setIsUploading(false);
+          alert("Failed to upload image.");
+        }
+      };
+
+      xhr.onerror = () => {
+        console.error("Upload failed");
+        setIsUploading(false);
+        alert("Failed to upload image.");
+      };
+
+      xhr.send(formData);
+    } else if (isVideo) {
+      // Use tmpfiles.org for videos - No API key required, supports CORS
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', 'https://tmpfiles.org/api/v1/upload', true);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = (event.loaded / event.total) * 100;
+          setUploadProgress(progress);
+        }
+      };
+
+      xhr.onload = async () => {
+        if (xhr.status === 200) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            // tmpfiles returns a viewing URL like https://tmpfiles.org/12345/vid.mp4
+            // We need to inject '/dl/' to get the direct raw media stream
+            const downloadURL = response.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+            
+            await addDoc(collection(db, 'chats', chatId, 'messages'), {
+              text: '',
+              senderId: user.uid,
+              timestamp: Date.now(),
+              mediaUrl: downloadURL,
+              mediaType: 'video',
+              expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes from now
+            });
+            
+            setIsUploading(false);
+            setUploadProgress(0);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+          } catch (err) {
+            console.error("Failed to parse response:", err);
+            setIsUploading(false);
+            alert("Failed to process video upload.");
+          }
+        } else {
+          console.error("Upload failed:", xhr.responseText);
+          setIsUploading(false);
+          alert("Failed to upload video.");
+        }
+      };
+
+      xhr.onerror = (e) => {
+        console.error("Upload failed (Network/CORS error)", e);
+        setIsUploading(false);
+        alert("Network error: Failed to upload video. The file might be too large or blocked by your browser.");
+      };
+
+      xhr.send(formData);
+    }
   };
 
   const handleDownload = async (url: string, type: string) => {
@@ -256,23 +325,53 @@ export default function Chat() {
     <div className="max-w-4xl mx-auto h-[calc(100dvh-12rem)] sm:h-[calc(100vh-12rem)] flex flex-col bg-white/[0.03] border border-white/5 rounded-[2.5rem] overflow-hidden relative">
       {/* Media Viewer Modal */}
       {viewerMedia && (
-        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4">
+        <div 
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-4"
+          onClick={() => setViewerMedia(null)} // Close when clicking backdrop
+        >
+          {/* Prominent Close Button */}
           <button 
-            onClick={() => setViewerMedia(null)}
-            className="absolute top-6 right-6 p-3 text-white/50 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors cursor-pointer z-50"
+            onClick={(e) => {
+              e.stopPropagation();
+              setViewerMedia(null);
+            }}
+            className="absolute top-4 right-4 sm:top-8 sm:right-8 p-3 text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors cursor-pointer z-[110] flex items-center gap-2"
           >
             <X className="w-6 h-6" />
+            <span className="hidden sm:inline font-medium pr-2">Close</span>
           </button>
           
-          <div className="relative max-w-5xl max-h-[80vh] w-full flex items-center justify-center">
+          <div 
+            className="relative max-w-5xl max-h-[80vh] w-full flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking the media itself
+          >
             {viewerMedia.type === 'image' ? (
-              <img src={viewerMedia.url} alt="Viewed media" className="max-w-full max-h-[80vh] object-contain rounded-lg" />
+              <img 
+                src={viewerMedia.url} 
+                alt="Viewed media" 
+                className="max-w-full max-h-[80vh] object-contain rounded-lg select-none" 
+                referrerPolicy="no-referrer"
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+              />
             ) : (
-              <video src={viewerMedia.url} controls autoPlay className="max-w-full max-h-[80vh] rounded-lg shadow-2xl" />
+              <video 
+                src={viewerMedia.url} 
+                controls 
+                autoPlay 
+                className="max-w-full max-h-[80vh] rounded-lg shadow-2xl select-none" 
+                referrerPolicy="no-referrer"
+                controlsList="nodownload nofullscreen noremoteplayback"
+                disablePictureInPicture
+                onContextMenu={(e) => e.preventDefault()}
+              />
             )}
           </div>
 
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4">
+          <div 
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 z-[110]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => handleDownload(viewerMedia.url, viewerMedia.type)}
               className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-full font-medium hover:scale-105 transition-transform cursor-pointer shadow-xl shadow-white/10"
@@ -355,10 +454,23 @@ export default function Chat() {
                       onClick={() => setViewerMedia({ url: msg.mediaUrl!, type: msg.mediaType! })}
                     >
                       {msg.mediaType === 'image' ? (
-                        <img src={msg.mediaUrl} alt="Shared media" className="max-w-full sm:max-w-[280px] max-h-[280px] object-cover rounded-lg" />
+                        <img 
+                          src={msg.mediaUrl} 
+                          alt="Shared media" 
+                          className="max-w-full sm:max-w-[280px] max-h-[280px] object-cover rounded-lg select-none" 
+                          referrerPolicy="no-referrer"
+                          draggable={false}
+                          onContextMenu={(e) => e.preventDefault()}
+                        />
                       ) : (
                         <div className="relative">
-                          <video src={msg.mediaUrl} className="max-w-full sm:max-w-[280px] max-h-[280px] object-cover rounded-lg" />
+                          <video 
+                            src={msg.mediaUrl} 
+                            className="max-w-full sm:max-w-[280px] max-h-[280px] object-cover rounded-lg select-none" 
+                            referrerPolicy="no-referrer"
+                            controlsList="nodownload"
+                            onContextMenu={(e) => e.preventDefault()}
+                          />
                           <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
                             <Play className="w-12 h-12 text-white opacity-90" />
                           </div>
