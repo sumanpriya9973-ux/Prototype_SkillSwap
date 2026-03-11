@@ -405,8 +405,8 @@ export default function Chat() {
       )}
 
       {/* Input */}
-      <div className="p-4 border-t border-white/10 bg-[#0a0a0a] shrink-0">
-        <form onSubmit={handleSendMessage} className="flex gap-2 items-center">
+      <div className="p-3 sm:p-4 border-t border-white/10 bg-[#0a0a0a] shrink-0">
+        <form onSubmit={handleSendMessage} className="flex gap-2 items-center w-full">
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -418,9 +418,9 @@ export default function Chat() {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 disabled:opacity-50"
           >
-            <Paperclip className="w-5 h-5" />
+            <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           
           <input
@@ -428,15 +428,15 @@ export default function Chat() {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 bg-[#111] border border-white/10 rounded-full px-6 py-3.5 text-white placeholder-white/30 focus:outline-none focus:border-white/40 transition-colors"
+            className="flex-1 min-w-0 bg-[#111] border border-white/10 rounded-full px-4 py-2.5 sm:px-6 sm:py-3.5 text-sm sm:text-base text-white placeholder-white/30 focus:outline-none focus:border-white/40 transition-colors"
           />
           
           <button 
             type="submit"
             disabled={!newMessage.trim()}
-            className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform disabled:opacity-50 disabled:hover:scale-100 cursor-pointer shrink-0"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform disabled:opacity-50 disabled:hover:scale-100 cursor-pointer shrink-0"
           >
-            <Send className="w-5 h-5 ml-1" />
+            <Send className="w-4 h-4 sm:w-5 sm:h-5 ml-0.5 sm:ml-1" />
           </button>
         </form>
       </div>
