@@ -12,6 +12,7 @@ interface UserProfile {
   contactType: 'email' | 'whatsapp';
   skillHave: string;
   skillWant: string;
+  photoURL?: string;
 }
 
 interface Review {
@@ -120,9 +121,13 @@ export default function UserProfileView() {
           <div className="w-24 sm:w-32 shrink-0 flex flex-col items-center gap-5">
             {/* Profile Picture Placeholder */}
             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-white/10 to-transparent border border-white/10 shadow-xl flex items-center justify-center overflow-hidden shrink-0">
-              <div className="text-4xl sm:text-5xl font-medium text-white/60">
-                {profile.name.charAt(0).toUpperCase()}
-              </div>
+              {profile.photoURL && !profile.photoURL.startsWith('http') && !profile.photoURL.startsWith('data:') ? (
+                <span className="text-4xl sm:text-6xl">{profile.photoURL}</span>
+              ) : (
+                <div className="text-4xl sm:text-5xl font-medium text-white/60">
+                  {profile.name.charAt(0).toUpperCase()}
+                </div>
+              )}
             </div>
             
             {/* Ratings */}

@@ -4,3 +4,14 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
+
+html.light-theme {
+  filter: invert(1) hue-rotate(180deg);
+  background-color: #fafafa;
+}
+
+html.light-theme img,
+html.light-theme video,
+html.light-theme iframe {
+  filter: invert(1) hue-rotate(180deg);
+}

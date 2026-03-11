@@ -4,11 +4,14 @@ import { MapPin, User, Mail, MessageCircle, Edit2, Coins, ChevronRight, Star, Sh
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
+import EmojiPicker from 'emoji-picker-react';
 
 export default function Profile() {
   const { profile, updateProfile } = useAuth();
   const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
+  const [editSection, setEditSection] = useState<'personal' | 'skills' | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [photoURL, setPhotoURL] = useState('');
   
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
@@ -26,6 +29,7 @@ export default function Profile() {
       setSkillHave(profile.skillHave || '');
       setSkillWant(profile.skillWant || '');
       setLocation(profile.location || null);
+      setPhotoURL(profile.photoURL || '');
     }
   }, [profile]);
 
@@ -39,6 +43,7 @@ export default function Profile() {
         contactType,
         skillHave,
         skillWant,
+        photoURL,
       };
       
       if (location) {
@@ -46,7 +51,7 @@ export default function Profile() {
       }
 
       await updateProfile(profileData);
-      setIsEditing(false);
+      setEditSection(null);
     } catch (error) {
       alert('Failed to update profile. Please try again.');
     } finally {
@@ -78,18 +83,37 @@ export default function Profile() {
     navigate('/');
   };
 
-  if (!isEditing) {
+  if (!editSection) {
     return (
       <div className="max-w-2xl mx-auto">
         <div className="flex flex-col items-center mb-12">
           <div className="w-32 h-32 bg-white/5 border border-white/10 rounded-full flex items-center justify-center mb-6 relative group">
-            <User className="w-12 h-12 text-white/50" />
+            {profile?.photoURL && !profile.photoURL.startsWith('http') && !profile.photoURL.startsWith('data:') ? (
+              <span className="text-6xl">{profile.photoURL}</span>
+            ) : (
+              <User className="w-12 h-12 text-white/50" />
+            )}
             <button 
-              onClick={() => setIsEditing(true)} 
-              className="absolute bottom-0 right-0 w-10 h-10 bg-white text-black rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg cursor-pointer"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)} 
+              className="absolute bottom-0 right-0 w-10 h-10 bg-white text-black rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg cursor-pointer z-10"
             >
               <Edit2 className="w-4 h-4" />
             </button>
+            {showEmojiPicker && (
+              <div className="absolute top-full mt-2 z-50">
+                <div className="fixed inset-0" onClick={() => setShowEmojiPicker(false)} />
+                <div className="relative">
+                  <EmojiPicker 
+                    onEmojiClick={(emojiData) => {
+                      setPhotoURL(emojiData.emoji);
+                      updateProfile({ photoURL: emojiData.emoji });
+                      setShowEmojiPicker(false);
+                    }}
+                    theme="dark"
+                  />
+                </div>
+              </div>
+            )}
           </div>
           <h2 className="text-3xl font-medium tracking-tight mb-2">{profile?.name || 'Your Name'}</h2>
           <div className="flex items-center gap-2 text-white/50 text-sm">
@@ -119,7 +143,7 @@ export default function Profile() {
           <div className="text-[10px] uppercase tracking-widest text-white/40 font-bold mb-4 px-4">Profile Settings</div>
           
           <button 
-            onClick={() => setIsEditing(true)} 
+            onClick={() => setEditSection('personal')} 
             className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-3xl flex items-center justify-between hover:bg-white/[0.06] transition-colors group cursor-pointer"
           >
             <div className="flex items-center gap-4">
@@ -135,7 +159,7 @@ export default function Profile() {
           </button>
 
           <button 
-            onClick={() => setIsEditing(true)} 
+            onClick={() => setEditSection('skills')} 
             className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-3xl flex items-center justify-between hover:bg-white/[0.06] transition-colors group cursor-pointer"
           >
             <div className="flex items-center gap-4">
@@ -171,121 +195,131 @@ export default function Profile() {
   return (
     <div className="max-w-2xl mx-auto">
       <button 
-        onClick={() => setIsEditing(false)}
+        onClick={() => setEditSection(null)}
         className="flex items-center gap-2 text-white/50 hover:text-white mb-8 transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Profile
       </button>
 
-      <h2 className="text-4xl font-medium tracking-tight mb-10">Edit Profile</h2>
+      <h2 className="text-4xl font-medium tracking-tight mb-10">
+        {editSection === 'personal' ? 'Personal Information' : 'Skills & Preferences'}
+      </h2>
       
       <form onSubmit={handleSubmit} className="space-y-8 bg-white/[0.03] border border-white/5 p-8 md:p-10 rounded-[2.5rem]">
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Your Name</label>
-          <input
-            required
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            className="w-full bg-[#111] border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
-            placeholder="e.g. Jane Doe"
-          />
-        </div>
+        {editSection === 'personal' && (
+          <>
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Your Name</label>
+              <input
+                required
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                className="w-full bg-[#111] border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
+                placeholder="e.g. Jane Doe"
+              />
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Contact Method</label>
-            <select
-              value={contactType}
-              onChange={e => setContactType(e.target.value as 'email' | 'whatsapp')}
-              className="w-full bg-[#111] border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-white/40 transition-colors appearance-none"
-            >
-              <option value="email">Email</option>
-              <option value="whatsapp">WhatsApp</option>
-            </select>
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold">
-              {contactType === 'email' ? 'Email Address' : 'Phone Number'}
-            </label>
-            <input
-              required
-              type={contactType === 'email' ? 'email' : 'tel'}
-              value={contact}
-              onChange={e => setContact(e.target.value)}
-              className="w-full bg-[#111] border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
-              placeholder={contactType === 'email' ? 'you@example.com' : '+1234567890'}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Skill You Have</label>
-          <input
-            required
-            type="text"
-            value={skillHave}
-            onChange={e => setSkillHave(e.target.value)}
-            className="w-full bg-[#111] border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
-            placeholder="e.g. Frontend Engineering"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Skills You Want to Learn (Press Enter to add)</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {skillWant.split(',').filter(s => s.trim()).map((skill, index) => (
-              <div key={index} className="flex items-center gap-1 bg-white/10 px-3 py-1.5 rounded-full text-sm">
-                <span>{skill.trim()}</span>
-                <button 
-                  type="button" 
-                  onClick={() => {
-                    const skills = skillWant.split(',').filter(s => s.trim());
-                    skills.splice(index, 1);
-                    setSkillWant(skills.join(', '));
-                  }}
-                  className="text-white/50 hover:text-white ml-1 cursor-pointer"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Contact Method</label>
+                <select
+                  value={contactType}
+                  onChange={e => setContactType(e.target.value as 'email' | 'whatsapp')}
+                  className="w-full bg-[#111] border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-white/40 transition-colors appearance-none"
                 >
-                  &times;
-                </button>
+                  <option value="email">Email</option>
+                  <option value="whatsapp">WhatsApp</option>
+                </select>
               </div>
-            ))}
-          </div>
-          <input
-            type="text"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                const value = e.currentTarget.value.trim();
-                if (value) {
-                  const currentSkills = skillWant.split(',').filter(s => s.trim());
-                  if (!currentSkills.includes(value)) {
-                    setSkillWant(currentSkills.length > 0 ? `${skillWant}, ${value}` : value);
-                  }
-                  e.currentTarget.value = '';
-                }
-              }
-            }}
-            className="w-full bg-[#111] border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
-            placeholder="Type a skill and press Enter..."
-          />
-        </div>
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold">
+                  {contactType === 'email' ? 'Email Address' : 'Phone Number'}
+                </label>
+                <input
+                  required
+                  type={contactType === 'email' ? 'email' : 'tel'}
+                  value={contact}
+                  onChange={e => setContact(e.target.value)}
+                  className="w-full bg-[#111] border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
+                  placeholder={contactType === 'email' ? 'you@example.com' : '+1234567890'}
+                />
+              </div>
+            </div>
 
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Location (For Map)</label>
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={getLocation}
-              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-3 rounded-2xl text-sm font-medium transition-all cursor-pointer"
-            >
-              <MapPin className="w-4 h-4" />
-              {location ? 'Update Location' : 'Get My Location'}
-            </button>
-            {location && <span className="text-sm text-emerald-400">Location set!</span>}
-          </div>
-        </div>
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Location (For Map)</label>
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={getLocation}
+                  className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-3 rounded-2xl text-sm font-medium transition-all cursor-pointer"
+                >
+                  <MapPin className="w-4 h-4" />
+                  {location ? 'Update Location' : 'Get My Location'}
+                </button>
+                {location && <span className="text-sm text-emerald-400">Location set!</span>}
+              </div>
+            </div>
+          </>
+        )}
+
+        {editSection === 'skills' && (
+          <>
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Skill You Have</label>
+              <input
+                required
+                type="text"
+                value={skillHave}
+                onChange={e => setSkillHave(e.target.value)}
+                className="w-full bg-[#111] border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
+                placeholder="e.g. Frontend Engineering"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Skills You Want to Learn (Press Enter to add)</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {skillWant.split(',').filter(s => s.trim()).map((skill, index) => (
+                  <div key={index} className="flex items-center gap-1 bg-white/10 px-3 py-1.5 rounded-full text-sm">
+                    <span>{skill.trim()}</span>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const skills = skillWant.split(',').filter(s => s.trim());
+                        skills.splice(index, 1);
+                        setSkillWant(skills.join(', '));
+                      }}
+                      className="text-white/50 hover:text-white ml-1 cursor-pointer"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <input
+                type="text"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const value = e.currentTarget.value.trim();
+                    if (value) {
+                      const currentSkills = skillWant.split(',').filter(s => s.trim());
+                      if (!currentSkills.includes(value)) {
+                        setSkillWant(currentSkills.length > 0 ? `${skillWant}, ${value}` : value);
+                      }
+                      e.currentTarget.value = '';
+                    }
+                  }
+                }}
+                className="w-full bg-[#111] border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
+                placeholder="Type a skill and press Enter..."
+              />
+            </div>
+          </>
+        )}
 
         <button
           type="submit"

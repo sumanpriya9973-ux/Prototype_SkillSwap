@@ -14,6 +14,14 @@ interface UserProfile {
   contactType: 'email' | 'whatsapp';
   location?: { lat: number; lng: number };
   coins: number;
+  settings?: {
+    emailNotifs?: boolean;
+    pushNotifs?: boolean;
+    publicProfile?: boolean;
+    language?: string;
+    twoFactor?: boolean;
+    dataSaver?: boolean;
+  };
 }
 
 interface AuthContextType {
@@ -48,14 +56,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           profileUnsubscribe = onSnapshot(docRef, async (docSnap) => {
             if (docSnap.exists()) {
-              setProfile(docSnap.data() as UserProfile);
+              const data = docSnap.data() as UserProfile;
+              if (data.coins === undefined) {
+                data.coins = 50;
+                await setDoc(docRef, { coins: 50 }, { merge: true });
+              }
+              setProfile(data);
               setLoading(false);
             } else {
               const newProfile: UserProfile = {
                 uid: firebaseUser.uid,
                 name: firebaseUser.displayName || 'Anonymous',
                 email: firebaseUser.email || '',
-                photoURL: firebaseUser.photoURL || '',
+                photoURL: '',
                 skillHave: '',
                 skillWant: '',
                 contact: firebaseUser.email || '',
@@ -98,8 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user || !profile) return;
     try {
       const cleanData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
-      const updatedProfile = { ...profile, ...cleanData };
-      await setDoc(doc(db, 'users', user.uid), updatedProfile, { merge: true });
+      await setDoc(doc(db, 'users', user.uid), cleanData, { merge: true });
       // We don't need to manually setProfile here anymore because onSnapshot will handle it
     } catch (error) {
       console.error("Error updating profile:", error);

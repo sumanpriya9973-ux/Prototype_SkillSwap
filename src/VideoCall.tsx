@@ -28,6 +28,7 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
   const [isMicOn, setIsMicOn] = useState(true);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [isScreenShareSupported, setIsScreenShareSupported] = useState(false);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [hasRemoteUserJoined, setHasRemoteUserJoined] = useState(false);
   const candidatesQueue = useRef<RTCIceCandidateInit[]>([]);
@@ -35,6 +36,14 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
   useEffect(() => {
     let isMounted = true;
     pc.current = new RTCPeerConnection(servers);
+
+    // Check if screen sharing is supported and not on a mobile/tablet device
+    const checkScreenShareSupport = () => {
+      const hasDisplayMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+      setIsScreenShareSupported(hasDisplayMedia && !isMobile);
+    };
+    checkScreenShareSupport();
 
     const setupMedia = async () => {
       try {
@@ -354,9 +363,11 @@ export default function VideoCall({ chatId, userId, isInitiator, onEndCall }: Vi
         <button onClick={toggleVideo} className={`p-3 sm:p-4 rounded-full transition-colors ${isVideoOn ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-red-500/20 text-red-500 hover:bg-red-500/30'}`}>
           {isVideoOn ? <VideoIcon className="w-5 h-5 sm:w-6 sm:h-6" /> : <VideoOff className="w-5 h-5 sm:w-6 sm:h-6" />}
         </button>
-        <button onClick={toggleScreenShare} className={`p-3 sm:p-4 rounded-full transition-colors ${isScreenSharing ? 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30' : 'bg-white/10 hover:bg-white/20 text-white'}`}>
-          {isScreenSharing ? <MonitorOff className="w-5 h-5 sm:w-6 sm:h-6" /> : <MonitorUp className="w-5 h-5 sm:w-6 sm:h-6" />}
-        </button>
+        {isScreenShareSupported && (
+          <button onClick={toggleScreenShare} className={`p-3 sm:p-4 rounded-full transition-colors ${isScreenSharing ? 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30' : 'bg-white/10 hover:bg-white/20 text-white'}`}>
+            {isScreenSharing ? <MonitorOff className="w-5 h-5 sm:w-6 sm:h-6" /> : <MonitorUp className="w-5 h-5 sm:w-6 sm:h-6" />}
+          </button>
+        )}
         <button onClick={() => hangup(false)} className="p-3 sm:p-4 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20">
           <PhoneOff className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>

@@ -103,9 +103,13 @@ export default function Layout() {
               <span className="hidden sm:block text-sm font-medium">Chat</span>
               <MessageSquare className="w-5 h-5 sm:hidden" />
             </Link>
-            <Link to="/profile" className="p-2 text-white/50 hover:text-white transition-colors rounded-full hover:bg-white/5">
+            <Link to="/profile" className="p-2 text-white/50 hover:text-white transition-colors rounded-full hover:bg-white/5 flex items-center justify-center overflow-hidden">
               <span className="hidden sm:block text-sm font-medium">Profile</span>
-              <User className="w-5 h-5 sm:hidden" />
+              {profile?.photoURL && !profile.photoURL.startsWith('http') && !profile.photoURL.startsWith('data:') ? (
+                <span className="text-lg leading-none sm:hidden">{profile.photoURL}</span>
+              ) : (
+                <User className="w-5 h-5 sm:hidden" />
+              )}
             </Link>
             
             <div className="w-px h-6 bg-white/10 mx-2"></div>
@@ -129,20 +133,22 @@ export default function Layout() {
                     <Users className="w-4 h-4" />
                     Match
                   </Link>
-                  <button 
+                  <Link 
+                    to="/settings"
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors text-left"
-                    onClick={() => { setIsMenuOpen(false); alert('Settings coming soon!'); }}
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     <Settings className="w-4 h-4" />
                     Settings
-                  </button>
-                  <button 
+                  </Link>
+                  <Link 
+                    to="/how-it-works"
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors text-left"
-                    onClick={() => { setIsMenuOpen(false); alert('How It Works coming soon!'); }}
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     <HelpCircle className="w-4 h-4" />
                     How It Works
-                  </button>
+                  </Link>
                   <button 
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors text-left"
                     onClick={() => { setIsMenuOpen(false); alert('About Us coming soon!'); }}

@@ -11,6 +11,8 @@ import Chat from './Chat';
 import ChatList from './ChatList';
 import MapView from './Map';
 import LoadingScreen from './LoadingScreen';
+import HowItWorks from './HowItWorks';
+import Settings from './Settings';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -25,6 +27,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
@@ -33,6 +36,7 @@ export default function App() {
             <Route path="/chat" element={<ChatList />} />
             <Route path="/chat/:uid" element={<Chat />} />
             <Route path="/map" element={<MapView />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>
       </BrowserRouter>

@@ -55,12 +55,20 @@ export default function LandingPage() {
             </div>
             <span className="text-xl font-semibold tracking-tight">SkillSwap</span>
           </div>
-          <button 
-            onClick={handleLogin}
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-full text-sm font-medium transition-all cursor-pointer"
-          >
-            <span>Sign In / Sign Up</span>
-          </button>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/how-it-works')}
+              className="text-white/70 hover:text-white text-sm font-medium transition-colors cursor-pointer hidden sm:block"
+            >
+              How it Works
+            </button>
+            <button 
+              onClick={handleLogin}
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-full text-sm font-medium transition-all cursor-pointer"
+            >
+              <span>Sign In / Sign Up</span>
+            </button>
+          </div>
         </div>
       </nav>
 
