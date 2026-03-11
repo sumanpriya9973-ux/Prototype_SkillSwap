@@ -253,7 +253,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto h-[calc(100vh-12rem)] flex flex-col bg-white/[0.03] border border-white/5 rounded-[2.5rem] overflow-hidden relative">
+    <div className="max-w-4xl mx-auto h-[calc(100dvh-12rem)] sm:h-[calc(100vh-12rem)] flex flex-col bg-white/[0.03] border border-white/5 rounded-[2.5rem] overflow-hidden relative">
       {/* Media Viewer Modal */}
       {viewerMedia && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4">
@@ -314,7 +314,7 @@ export default function Chat() {
       )}
 
       {/* Chat Header */}
-      <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#0a0a0a]">
+      <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#0a0a0a] shrink-0">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
             <ArrowLeft className="w-5 h-5 text-white/70" />
@@ -337,7 +337,7 @@ export default function Chat() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
         {messages.map((msg) => {
           const isExpired = msg.expiresAt && msg.expiresAt < Date.now();
           if (isExpired) return null; // Hide expired messages immediately
@@ -390,7 +390,7 @@ export default function Chat() {
 
       {/* Upload Progress Bar */}
       {isUploading && (
-        <div className="px-6 py-2 bg-[#0a0a0a] border-t border-white/5">
+        <div className="px-6 py-2 bg-[#0a0a0a] border-t border-white/5 shrink-0">
           <div className="flex items-center justify-between text-xs text-white/50 mb-1">
             <span>Uploading media...</span>
             <span>{Math.round(uploadProgress)}%</span>
@@ -405,7 +405,7 @@ export default function Chat() {
       )}
 
       {/* Input */}
-      <div className="p-4 border-t border-white/10 bg-[#0a0a0a]">
+      <div className="p-4 border-t border-white/10 bg-[#0a0a0a] shrink-0">
         <form onSubmit={handleSendMessage} className="flex gap-2 items-center">
           <input 
             type="file" 
