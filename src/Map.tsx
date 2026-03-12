@@ -60,8 +60,12 @@ function RoutingControl({ start, end, onRouteFound, transportMode }: { start: [n
         L.latLng(endLat, endLng)
       ],
       router: L.Routing.osrmv1({
-        serviceUrl: 'https://router.project-osrm.org/route/v1',
-        profile: transportMode
+        serviceUrl: transportMode === 'walking' 
+          ? 'https://routing.openstreetmap.de/routed-foot/route/v1'
+          : transportMode === 'cycling'
+            ? 'https://routing.openstreetmap.de/routed-bike/route/v1'
+            : 'https://routing.openstreetmap.de/routed-car/route/v1',
+        profile: transportMode === 'walking' ? 'foot' : transportMode === 'cycling' ? 'bike' : 'car'
       }),
       lineOptions: {
         styles: [{ color: "#3b82f6", weight: 4, opacity: 0.8 }],
