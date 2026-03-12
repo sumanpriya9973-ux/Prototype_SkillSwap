@@ -15,3 +15,8 @@ html.light-theme video,
 html.light-theme iframe {
   filter: invert(1) hue-rotate(180deg);
 }
+
+/* Hide default leaflet routing machine instruction box */
+.leaflet-routing-container {
+  display: none !important;
+}
