@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { useAuth } from './AuthContext';
-import { Star, MessageCircle, ArrowLeft, Mail } from 'lucide-react';
+import { Star, MessageCircle, ArrowLeft, Mail, CalendarClock, ChevronDown } from 'lucide-react';
 
 interface UserProfile {
   uid: string;
@@ -37,6 +37,162 @@ export default function UserProfileView() {
   const [comment, setComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   const [isWritingReview, setIsWritingReview] = useState(false);
+
+  const [scheduleDay, setScheduleDay] = useState('M');
+  const [scheduleHour, setScheduleHour] = useState('12');
+  const [scheduleMinute, setScheduleMinute] = useState('00');
+  const [swapType, setSwapType] = useState('In-person');
+  const [isScheduling, setIsScheduling] = useState(false);
+
+  const days = ['M', 'T', 'W', 'Th', 'F', 'Sa', 'S'];
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+  const minutes = ['00', '15', '30', '45'];
+  const swapTypes = ['In-person', 'Video Call', 'Voice Call', 'Chat'];
+
+  const handleScheduleSwap = async () => {
+    if (!user || !currentUserProfile || !profile || !uid) return;
+    setIsScheduling(true);
+    try {
+      await addDoc(collection(db, 'scheduled_swaps'), {
+        participants: [user.uid, uid],
+        participantNames: {
+          [user.uid]: currentUserProfile.name,
+          [uid]: profile.name
+        },
+        swapType,
+        scheduleDay,
+        scheduleHour,
+        scheduleMinute,
+        status: 'scheduled',
+        createdAt: serverTimestamp()
+      });
+      alert(`Successfully scheduled a ${swapType} swap for ${scheduleDay} at ${scheduleHour}:${scheduleMinute}`);
+    } catch (error) {
+      console.error("Error scheduling swap:", error);
+      alert("Failed to schedule swap. Please try again.");
+    } finally {
+      setIsScheduling(false);
+    }
+  };
+
+  const RotaryDial = ({ options, value, onChange, label }: { options: string[], value: string, onChange: (v: string) => void, label: string }) => {
+    const [rotation, setRotation] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    const startAngleRef = React.useRef(0);
+    const currentRotationRef = React.useRef(0);
+
+    const numOptions = options.length;
+    const anglePerOption = 360 / numOptions;
+
+    React.useEffect(() => {
+      if (!isDragging) {
+        const index = options.indexOf(value);
+        if (index !== -1) {
+          const targetRotation = -index * anglePerOption;
+          setRotation(targetRotation);
+          currentRotationRef.current = targetRotation;
+        }
+      }
+    }, [value, options, isDragging, anglePerOption]);
+
+    const getAngle = (clientX: number, clientY: number) => {
+      if (!containerRef.current) return 0;
+      const rect = containerRef.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const x = clientX - centerX;
+      const y = clientY - centerY;
+      return Math.atan2(y, x) * (180 / Math.PI);
+    };
+
+    const handlePointerDown = (e: React.PointerEvent) => {
+      setIsDragging(true);
+      const angle = getAngle(e.clientX, e.clientY);
+      startAngleRef.current = angle - currentRotationRef.current;
+      e.currentTarget.setPointerCapture(e.pointerId);
+    };
+
+    const handlePointerMove = (e: React.PointerEvent) => {
+      if (!isDragging) return;
+      const angle = getAngle(e.clientX, e.clientY);
+      let newRotation = angle - startAngleRef.current;
+      setRotation(newRotation);
+      currentRotationRef.current = newRotation;
+    };
+
+    const handlePointerUp = (e: React.PointerEvent) => {
+      if (!isDragging) return;
+      setIsDragging(false);
+      e.currentTarget.releasePointerCapture(e.pointerId);
+
+      let normalizedRotation = currentRotationRef.current % 360;
+      if (normalizedRotation > 0) normalizedRotation -= 360;
+      
+      let index = Math.round(-normalizedRotation / anglePerOption);
+      if (index < 0) index += numOptions;
+      if (index >= numOptions) index -= numOptions;
+
+      onChange(options[index]);
+    };
+
+    let normalizedRotation = rotation % 360;
+    if (normalizedRotation > 0) normalizedRotation -= 360;
+    let currentIndex = Math.round(-normalizedRotation / anglePerOption);
+    if (currentIndex < 0) currentIndex += numOptions;
+    if (currentIndex >= numOptions) currentIndex -= numOptions;
+    const displayValue = options[currentIndex];
+
+    return (
+      <div className="flex flex-col items-center w-full max-w-[100px] sm:max-w-[140px] flex-1">
+        <div 
+          ref={containerRef}
+          className="w-full aspect-square rounded-full border-2 border-white/10 bg-gradient-to-br from-zinc-800 to-black relative flex items-center justify-center shadow-[0_0_30px_rgba(0,0,0,0.5)] cursor-grab active:cursor-grabbing touch-none"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+        >
+          {/* The rotating disc */}
+          <div 
+            className="absolute inset-1 sm:inset-2 rounded-full border border-white/5 bg-zinc-950 shadow-inner flex items-center justify-center"
+            style={{ 
+              transform: `rotate(${rotation}deg)`,
+              transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+            }}
+          >
+            {/* Tick marks */}
+            {options.map((opt, i) => {
+              const angle = i * anglePerOption;
+              const isMajor = i % Math.ceil(numOptions / 12) === 0;
+              return (
+                <div 
+                  key={i}
+                  className="absolute inset-0 flex items-start justify-center pt-1 sm:pt-2 pointer-events-none"
+                  style={{ transform: `rotate(${angle}deg)` }}
+                >
+                  <div className={`w-1 rounded-full ${isMajor ? 'h-3 sm:h-4 bg-white/40' : 'h-1.5 sm:h-2 bg-white/10'}`}></div>
+                </div>
+              );
+            })}
+            
+            {/* Inner knob detail */}
+            <div className="w-3/5 h-3/5 rounded-full bg-gradient-to-br from-white/10 to-transparent border border-white/10 shadow-lg flex items-center justify-center pointer-events-none">
+              <div className="w-full h-full rounded-full bg-black/40 shadow-inner flex items-start justify-center pt-2 sm:pt-3">
+                 <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.8)]"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Selected Value Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="text-sm sm:text-xl font-bold text-white whitespace-nowrap">{displayValue}</span>
+          </div>
+        </div>
+        <span className="text-[10px] sm:text-xs uppercase tracking-widest text-white/40 font-bold mt-4 sm:mt-5">{label}</span>
+      </div>
+    );
+  };
 
   useEffect(() => {
     const fetchProfileAndReviews = async () => {
@@ -181,6 +337,54 @@ export default function UserProfileView() {
           </div>
         </div>
       </div>
+
+      {/* Schedule Swap Section */}
+      {user?.uid !== uid && (
+        <div className="py-10 border-t border-white/10">
+          <div className="flex items-center gap-3 mb-8">
+            <CalendarClock className="w-6 h-6 text-white/70" />
+            <h3 className="text-2xl font-semibold tracking-tight text-white/90">Schedule Swap</h3>
+          </div>
+          
+          <div className="bg-white/[0.02] border border-white/5 p-6 sm:p-8 rounded-3xl shadow-xl">
+            <div className="flex flex-col gap-8">
+              
+              {/* Rotating Discs */}
+              <div className="flex flex-row justify-center gap-4 sm:gap-8 w-full">
+                <RotaryDial options={days} value={scheduleDay} onChange={setScheduleDay} label="Day" />
+                <RotaryDial options={hours} value={scheduleHour} onChange={setScheduleHour} label="Hour" />
+                <RotaryDial options={minutes} value={scheduleMinute} onChange={setScheduleMinute} label="Minute" />
+              </div>
+
+              {/* Swap Type & Schedule Button */}
+              <div className="flex flex-col gap-5 w-full">
+                <div className="relative">
+                  <label className="text-[10px] sm:text-xs uppercase tracking-widest text-white/40 font-bold mb-2 block">Swap Type</label>
+                  <div className="relative">
+                    <select 
+                      value={swapType}
+                      onChange={(e) => setSwapType(e.target.value)}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl pl-4 pr-10 py-3.5 text-sm text-white focus:outline-none focus:border-white/40 transition-colors appearance-none cursor-pointer"
+                    >
+                      {swapTypes.map(t => <option key={t} value={t} className="bg-zinc-900">{t}</option>)}
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-white/40 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+                
+                <button 
+                  onClick={handleScheduleSwap}
+                  disabled={isScheduling}
+                  className="w-full px-6 py-3.5 rounded-xl bg-white text-black text-sm font-bold hover:scale-[1.02] transition-transform shadow-lg mt-2 disabled:opacity-50 disabled:hover:scale-100"
+                >
+                  {isScheduling ? 'Scheduling...' : 'Schedule'}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Section */}
       <div className="pt-10 border-t border-white/10">

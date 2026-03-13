@@ -295,7 +295,7 @@ export default function MapView() {
 
       {/* Route Info Card */}
       <AnimatePresence>
-        {routeTarget && routeInfo && (
+        {routeTarget && (
           <motion.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
@@ -320,7 +320,9 @@ export default function MapView() {
               <div className="flex-1 bg-black/50 rounded-2xl p-4 border border-white/5">
                 <div className="text-gray-400 text-xs uppercase tracking-wider mb-1">Distance</div>
                 <div className="text-xl font-semibold text-white">
-                  {routeInfo.distance < 1000 
+                  {!routeInfo ? (
+                    <span className="animate-pulse text-white/50 text-base">Calculating...</span>
+                  ) : routeInfo.distance < 1000 
                     ? `${Math.round(routeInfo.distance)} m` 
                     : `${(routeInfo.distance / 1000).toFixed(1)} km`}
                 </div>
@@ -328,7 +330,9 @@ export default function MapView() {
               <div className="flex-1 bg-black/50 rounded-2xl p-4 border border-white/5 relative">
                 <div className="text-gray-400 text-xs uppercase tracking-wider mb-1">Est. Time</div>
                 <div className="text-xl font-semibold text-white">
-                  {routeInfo.time < 60 
+                  {!routeInfo ? (
+                    <span className="animate-pulse text-white/50 text-base">Calculating...</span>
+                  ) : routeInfo.time < 60 
                     ? `${Math.round(routeInfo.time)} sec` 
                     : routeInfo.time < 3600 
                       ? `${Math.round(routeInfo.time / 60)} min` 
@@ -350,7 +354,7 @@ export default function MapView() {
             </div>
 
             {/* Next Instruction */}
-            {routeInfo.instructions && routeInfo.instructions.length > currentInstructionIndex && (
+            {routeInfo && routeInfo.instructions && routeInfo.instructions.length > currentInstructionIndex && (
               <div className="bg-white/5 p-4 rounded-2xl flex flex-col border border-white/5 shrink-0">
                 <div className="text-gray-400 text-xs uppercase tracking-wider mb-2">Next Step</div>
                 <div className="flex items-center justify-between">

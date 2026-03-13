@@ -13,6 +13,7 @@ import MapView from './Map';
 import LoadingScreen from './LoadingScreen';
 import HowItWorks from './HowItWorks';
 import Settings from './Settings';
+import ScheduledSwaps from './ScheduledSwaps';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="/chat/:uid" element={<Chat />} />
             <Route path="/map" element={<MapView />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/scheduled-swaps" element={<ScheduledSwaps />} />
           </Route>
         </Routes>
       </BrowserRouter>

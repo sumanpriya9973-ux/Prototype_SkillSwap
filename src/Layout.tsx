@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { Sparkles, User, Map as MapIcon, MessageSquare, LogOut, Coins, Bell, Menu, Settings, Info, HelpCircle, Users } from 'lucide-react';
+import { Sparkles, User, Map as MapIcon, MessageSquare, LogOut, Coins, Bell, Menu, Settings, Info, HelpCircle, Users, CalendarClock } from 'lucide-react';
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useAuth } from './AuthContext';
@@ -132,6 +132,14 @@ export default function Layout() {
                   >
                     <Users className="w-4 h-4" />
                     Match
+                  </Link>
+                  <Link 
+                    to="/scheduled-swaps" 
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <CalendarClock className="w-4 h-4" />
+                    Scheduled Swaps
                   </Link>
                   <Link 
                     to="/settings"
