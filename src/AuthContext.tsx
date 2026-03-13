@@ -46,10 +46,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let profileUnsubscribe: () => void;
+    let profileUnsubscribe: (() => void) | undefined;
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+      
+      // Clean up previous listener if it exists
+      if (profileUnsubscribe) {
+        profileUnsubscribe();
+        profileUnsubscribe = undefined;
+      }
+
       if (firebaseUser) {
         try {
           const docRef = doc(db, 'users', firebaseUser.uid);
@@ -68,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 uid: firebaseUser.uid,
                 name: firebaseUser.displayName || 'Anonymous',
                 email: firebaseUser.email || '',
-                photoURL: '',
+                photoURL: firebaseUser.photoURL || '',
                 skillHave: '',
                 skillWant: '',
                 contact: firebaseUser.email || '',
@@ -79,25 +86,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setProfile(newProfile);
               setLoading(false);
             }
+          }, (error) => {
+            console.error("Firestore snapshot error:", error);
+            // Don't reset the profile on transient errors like network disconnects
+            setLoading(false);
           });
         } catch (error) {
-          console.error("Error fetching/creating user profile:", error);
-          setProfile({
-            uid: firebaseUser.uid,
-            name: firebaseUser.displayName || 'Anonymous',
-            email: firebaseUser.email || '',
-            skillHave: '',
-            skillWant: '',
-            contact: firebaseUser.email || '',
-            contactType: 'email',
-            coins: 50,
-          });
+          console.error("Error setting up user profile listener:", error);
           setLoading(false);
         }
       } else {
         setProfile(null);
         setLoading(false);
-        if (profileUnsubscribe) profileUnsubscribe();
       }
     });
 
