@@ -135,6 +135,7 @@ export default function ScheduledSwaps() {
           {swaps.map((swap) => {
             const otherUserId = swap.participants.find(id => id !== user?.uid);
             const otherUserName = otherUserId ? swap.participantNames[otherUserId] : 'Unknown User';
+            const isCreator = swap.createdBy ? swap.createdBy === user?.uid : swap.participants[0] === user?.uid;
 
             return (
               <div key={swap.id} className="bg-white/[0.02] border border-white/5 p-6 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:bg-white/[0.04] transition-colors">
@@ -157,18 +158,18 @@ export default function ScheduledSwaps() {
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto mt-4 sm:mt-0 shrink-0">
                   <button 
                     onClick={() => otherUserId && handleStartSwap(swap, otherUserId)}
-                    disabled={swap.createdBy === user?.uid || startingSwapId === swap.id}
+                    disabled={isCreator || startingSwapId === swap.id}
                     className={`order-2 sm:order-1 w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-colors text-center ${
-                      swap.createdBy === user?.uid 
+                      isCreator 
                         ? 'bg-white/5 text-white/30 cursor-not-allowed opacity-50' 
                         : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
                     }`}
-                    title={swap.createdBy === user?.uid ? "Only the receiver can start the swap" : "Start Swap"}
+                    title={isCreator ? "Only the receiver can start the swap" : "Start Swap"}
                   >
                     <Play className="w-4 h-4" />
                     {startingSwapId === swap.id 
                       ? 'Starting...' 
-                      : swap.createdBy === user?.uid 
+                      : isCreator 
                         ? 'Waiting for partner' 
                         : 'Start Swap'}
                   </button>
