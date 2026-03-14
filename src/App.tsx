@@ -14,6 +14,7 @@ import LoadingScreen from './LoadingScreen';
 import HowItWorks from './HowItWorks';
 import Settings from './Settings';
 import ScheduledSwaps from './ScheduledSwaps';
+import AboutUs from './AboutUs';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="/map" element={<MapView />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/scheduled-swaps" element={<ScheduledSwaps />} />
+            <Route path="/about" element={<AboutUs />} />
           </Route>
         </Routes>
       </BrowserRouter>

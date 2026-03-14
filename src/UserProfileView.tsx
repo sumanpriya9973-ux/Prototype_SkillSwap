@@ -59,6 +59,7 @@ export default function UserProfileView() {
           [user.uid]: currentUserProfile.name,
           [uid]: profile.name
         },
+        createdBy: user.uid,
         swapType,
         scheduleDay,
         scheduleHour,

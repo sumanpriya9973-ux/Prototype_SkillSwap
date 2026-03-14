@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { useAuth } from './AuthContext';
-import { CalendarClock, Video, MapPin, Phone, MessageSquare, ArrowLeft } from 'lucide-react';
+import { CalendarClock, Video, MapPin, Phone, MessageSquare, ArrowLeft, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface ScheduledSwap {
   id: string;
   participants: string[];
   participantNames: Record<string, string>;
+  createdBy?: string;
   swapType: string;
   scheduleDay: string;
   scheduleHour: string;
@@ -20,6 +21,7 @@ interface ScheduledSwap {
 export default function ScheduledSwaps() {
   const [swaps, setSwaps] = useState<ScheduledSwap[]>([]);
   const [loading, setLoading] = useState(true);
+  const [startingSwapId, setStartingSwapId] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -29,14 +31,21 @@ export default function ScheduledSwaps() {
       try {
         const q = query(
           collection(db, 'scheduled_swaps'),
-          where('participants', 'array-contains', user.uid),
-          orderBy('createdAt', 'desc')
+          where('participants', 'array-contains', user.uid)
         );
         const snapshot = await getDocs(q);
         const fetchedSwaps: ScheduledSwap[] = [];
         snapshot.forEach((doc) => {
           fetchedSwaps.push({ id: doc.id, ...doc.data() } as ScheduledSwap);
         });
+        
+        // Sort manually by createdAt to avoid needing a composite index
+        fetchedSwaps.sort((a, b) => {
+          const timeA = a.createdAt?.toMillis?.() || 0;
+          const timeB = b.createdAt?.toMillis?.() || 0;
+          return timeB - timeA;
+        });
+        
         setSwaps(fetchedSwaps);
       } catch (error) {
         console.error("Error fetching scheduled swaps:", error);
@@ -47,6 +56,32 @@ export default function ScheduledSwaps() {
 
     fetchSwaps();
   }, [user]);
+
+  const handleStartSwap = async (swap: ScheduledSwap, otherUserId: string) => {
+    if (!user) return;
+    setStartingSwapId(swap.id);
+    
+    try {
+      // Create a chat ID (consistent with how it's done in ChatList/Chat)
+      const chatId = [user.uid, otherUserId].sort().join('_');
+      
+      // Send a notification message in the chat
+      await addDoc(collection(db, 'chats', chatId, 'messages'), {
+        text: `🚀 I'm ready to start our scheduled ${swap.swapType} swap! Let's go!`,
+        senderId: user.uid,
+        timestamp: Date.now(),
+        createdAt: serverTimestamp()
+      });
+      
+      // Navigate to the chat
+      navigate(`/chat/${otherUserId}`);
+    } catch (error) {
+      console.error("Error starting swap:", error);
+      alert("Failed to start swap. Please try again.");
+    } finally {
+      setStartingSwapId(null);
+    }
+  };
 
   const getSwapIcon = (type: string) => {
     switch (type) {
@@ -119,7 +154,20 @@ export default function ScheduledSwaps() {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <button 
+                    onClick={() => otherUserId && handleStartSwap(swap, otherUserId)}
+                    disabled={swap.createdBy === user?.uid || startingSwapId === swap.id}
+                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors text-center ${
+                      swap.createdBy === user?.uid 
+                        ? 'bg-white/5 text-white/30 cursor-not-allowed' 
+                        : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                    }`}
+                    title={swap.createdBy === user?.uid ? "Only the receiver can start the swap" : "Start Swap"}
+                  >
+                    <Play className="w-4 h-4" />
+                    {startingSwapId === swap.id ? 'Starting...' : 'Start Swap'}
+                  </button>
                   <button 
                     onClick={() => navigate(`/chat/${otherUserId}`)}
                     className="flex-1 sm:flex-none px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-medium transition-colors text-center"

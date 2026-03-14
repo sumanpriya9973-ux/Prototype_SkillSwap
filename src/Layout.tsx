@@ -157,13 +157,14 @@ export default function Layout() {
                     <HelpCircle className="w-4 h-4" />
                     How It Works
                   </Link>
-                  <button 
+                  <Link 
+                    to="/about"
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors text-left"
-                    onClick={() => { setIsMenuOpen(false); alert('About Us coming soon!'); }}
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     <Info className="w-4 h-4" />
                     About Us
-                  </button>
+                  </Link>
                   <div className="h-px bg-white/10 my-1"></div>
                   <button 
                     onClick={() => { setIsMenuOpen(false); handleLogout(); }}
