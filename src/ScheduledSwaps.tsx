@@ -160,13 +160,17 @@ export default function ScheduledSwaps() {
                     disabled={swap.createdBy === user?.uid || startingSwapId === swap.id}
                     className={`order-2 sm:order-1 w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-colors text-center ${
                       swap.createdBy === user?.uid 
-                        ? 'bg-white/5 text-white/30 cursor-not-allowed' 
+                        ? 'bg-white/5 text-white/30 cursor-not-allowed opacity-50' 
                         : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
                     }`}
                     title={swap.createdBy === user?.uid ? "Only the receiver can start the swap" : "Start Swap"}
                   >
                     <Play className="w-4 h-4" />
-                    {startingSwapId === swap.id ? 'Starting...' : 'Start Swap'}
+                    {startingSwapId === swap.id 
+                      ? 'Starting...' 
+                      : swap.createdBy === user?.uid 
+                        ? 'Waiting for partner' 
+                        : 'Start Swap'}
                   </button>
                   <div className="order-1 sm:order-2 flex gap-2 sm:gap-3 w-full sm:w-auto">
                     <button 
