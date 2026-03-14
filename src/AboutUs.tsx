@@ -18,15 +18,15 @@ export default function AboutUs() {
 
       <div className="relative">
         {/* Background glow effects */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-blue-500/20 rounded-full blur-[100px] pointer-events-none"></div>
-        <div className="absolute bottom-0 right-0 w-[250px] h-[250px] bg-purple-500/20 rounded-full blur-[100px] pointer-events-none"></div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-white/5 rounded-full blur-[100px] pointer-events-none"></div>
+        <div className="absolute bottom-0 right-0 w-[250px] h-[250px] bg-white/5 rounded-full blur-[100px] pointer-events-none"></div>
 
         <div className="text-center mb-16 relative z-10">
           <div className="inline-flex items-center justify-center p-3 bg-white/5 rounded-2xl mb-6 border border-white/10 shadow-xl backdrop-blur-md">
-            <Sparkles className="w-8 h-8 text-blue-400" />
+            <Sparkles className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-5xl sm:text-7xl font-black tracking-tighter mb-6 bg-gradient-to-br from-white via-white/90 to-white/40 bg-clip-text text-transparent">
-            Crafted by <span className="text-blue-400">AyushLess</span>
+            Crafted by <span className="text-white">AyushLess</span>
           </h1>
           <p className="text-xl text-white/60 max-w-2xl mx-auto font-light leading-relaxed">
             We believe that everyone has something valuable to teach, and everyone has something wonderful to learn. Our mission is to connect curious minds globally.
@@ -35,8 +35,8 @@ export default function AboutUs() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
           <div className="bg-white/[0.02] border border-white/10 p-8 rounded-3xl backdrop-blur-md hover:bg-white/[0.04] transition-colors group">
-            <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <Code className="w-6 h-6 text-blue-400" />
+            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Code className="w-6 h-6 text-white" />
             </div>
             <h3 className="text-2xl font-bold mb-3 text-white/90">The Vision</h3>
             <p className="text-white/50 leading-relaxed">
@@ -45,8 +45,8 @@ export default function AboutUs() {
           </div>
 
           <div className="bg-white/[0.02] border border-white/10 p-8 rounded-3xl backdrop-blur-md hover:bg-white/[0.04] transition-colors group">
-            <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <Heart className="w-6 h-6 text-purple-400" />
+            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Heart className="w-6 h-6 text-white" />
             </div>
             <h3 className="text-2xl font-bold mb-3 text-white/90">Community First</h3>
             <p className="text-white/50 leading-relaxed">
@@ -55,8 +55,8 @@ export default function AboutUs() {
           </div>
 
           <div className="bg-white/[0.02] border border-white/10 p-8 rounded-3xl backdrop-blur-md hover:bg-white/[0.04] transition-colors group">
-            <div className="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <Globe className="w-6 h-6 text-emerald-400" />
+            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Globe className="w-6 h-6 text-white" />
             </div>
             <h3 className="text-2xl font-bold mb-3 text-white/90">Global Reach</h3>
             <p className="text-white/50 leading-relaxed">
@@ -65,8 +65,8 @@ export default function AboutUs() {
           </div>
 
           <div className="bg-white/[0.02] border border-white/10 p-8 rounded-3xl backdrop-blur-md hover:bg-white/[0.04] transition-colors group">
-            <div className="w-12 h-12 bg-amber-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <Rocket className="w-6 h-6 text-amber-400" />
+            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Rocket className="w-6 h-6 text-white" />
             </div>
             <h3 className="text-2xl font-bold mb-3 text-white/90">Future Ready</h3>
             <p className="text-white/50 leading-relaxed">
@@ -77,7 +77,7 @@ export default function AboutUs() {
 
         <div className="mt-20 text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 rounded-full backdrop-blur-md">
-            <Zap className="w-4 h-4 text-yellow-400" />
+            <Zap className="w-4 h-4 text-white" />
             <span className="text-sm font-medium text-white/70">Powered by passion. Built by AyushLess.</span>
           </div>
         </div>
