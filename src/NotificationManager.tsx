@@ -118,14 +118,14 @@ export default function NotificationManager() {
   if (!incomingCall) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-[9999] animate-in slide-in-from-top-4 fade-in duration-300">
-      <div className="bg-[#1a1a1a] border border-white/10 p-4 rounded-2xl shadow-2xl flex items-center gap-4 min-w-[300px]">
-        <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center animate-pulse shrink-0">
-          <Video className="w-6 h-6 text-emerald-400" />
+    <div className="fixed top-0 left-0 right-0 z-[9999] p-4 animate-in slide-in-from-top-4 fade-in duration-300 pointer-events-none">
+      <div className="bg-[#1a1a1a] border border-white/10 p-4 rounded-2xl shadow-2xl flex items-center gap-3 sm:gap-4 w-full max-w-md mx-auto pointer-events-auto">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-500/20 rounded-full flex items-center justify-center animate-pulse shrink-0">
+          <Video className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
         </div>
-        <div className="flex-1">
-          <h4 className="text-white font-medium">{incomingCall.callerName}</h4>
-          <p className="text-white/60 text-sm">Incoming video call...</p>
+        <div className="flex-1 min-w-0">
+          <h4 className="text-white font-medium truncate">{incomingCall.callerName}</h4>
+          <p className="text-white/60 text-sm truncate">Incoming video call...</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button 
