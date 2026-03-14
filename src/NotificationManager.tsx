@@ -1,14 +1,20 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { collection, query, where, onSnapshot, doc, getDoc, orderBy, limit } from 'firebase/firestore';
 import { db } from './firebase';
 import { useAuth } from './AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Video, PhoneOff } from 'lucide-react';
 
 export default function NotificationManager() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const activeChatListeners = useRef<Set<string>>(new Set());
   const unsubscribeFunctions = useRef<Map<string, () => void>>(new Map());
   const notifiedMessages = useRef<Set<string>>(new Set());
   const notifiedCalls = useRef<Set<string>>(new Set());
+  
+  const [incomingCall, setIncomingCall] = useState<{chatId: string, callerName: string, callId: string} | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -68,22 +74,31 @@ export default function NotificationManager() {
             // Use timestamp to uniquely identify the call attempt if available, otherwise fallback to callerId
             const callId = `${chatId}_${callData.timestamp || callData.callerId}`; 
             
-            if (callData.callerId !== user.uid && !notifiedCalls.current.has(callId)) {
-              notifiedCalls.current.add(callId);
-              
-              // Only notify if the call was initiated recently (within 10 seconds)
-              if (!callData.timestamp || Date.now() - callData.timestamp < 10000) {
+            if (callData.callerId !== user.uid) {
+              // Only notify if the call was initiated recently (within 30 seconds)
+              if (!callData.timestamp || Date.now() - callData.timestamp < 30000) {
                 const userDoc = await getDoc(doc(db, 'users', otherUid));
                 const callerName = userDoc.exists() ? userDoc.data().name : 'Someone';
                 
-                if ('Notification' in window && Notification.permission === 'granted') {
-                  new Notification(`Incoming Video Call`, {
-                    body: `${callerName} is calling you.`,
-                    icon: '/favicon.ico'
-                  });
+                // Show in-app notification if we are not already in that specific chat room
+                if (!location.pathname.includes(`/chat/${otherUid}`)) {
+                  setIncomingCall({ chatId, callerName, callId });
+                }
+
+                if (!notifiedCalls.current.has(callId)) {
+                  notifiedCalls.current.add(callId);
+                  if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification(`Incoming Video Call`, {
+                      body: `${callerName} is calling you.`,
+                      icon: '/favicon.ico'
+                    });
+                  }
                 }
               }
             }
+          } else {
+            // Call ended or rejected
+            setIncomingCall(prev => prev?.chatId === chatId ? null : prev);
           }
         });
 
@@ -98,7 +113,42 @@ export default function NotificationManager() {
       unsubscribeFunctions.current.clear();
       activeChatListeners.current.clear();
     };
-  }, [user]);
+  }, [user, location.pathname]);
 
-  return null;
+  if (!incomingCall) return null;
+
+  return (
+    <div className="fixed top-4 right-4 z-[9999] animate-in slide-in-from-top-4 fade-in duration-300">
+      <div className="bg-[#1a1a1a] border border-white/10 p-4 rounded-2xl shadow-2xl flex items-center gap-4 min-w-[300px]">
+        <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center animate-pulse shrink-0">
+          <Video className="w-6 h-6 text-emerald-400" />
+        </div>
+        <div className="flex-1">
+          <h4 className="text-white font-medium">{incomingCall.callerName}</h4>
+          <p className="text-white/60 text-sm">Incoming video call...</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button 
+            onClick={() => setIncomingCall(null)}
+            className="w-10 h-10 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-full flex items-center justify-center transition-colors"
+          >
+            <PhoneOff className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => {
+              setIncomingCall(null);
+              // We need to navigate to the chat room. The chat room URL is /chat/:uid
+              // But we only have chatId here. The chatId is `${uid1}_${uid2}`.
+              // We can extract the other user's uid from the chatId.
+              const otherUid = incomingCall.chatId.replace(user?.uid || '', '').replace('_', '');
+              navigate(`/chat/${otherUid}`);
+            }}
+            className="w-10 h-10 bg-emerald-500 text-white hover:bg-emerald-600 rounded-full flex items-center justify-center transition-colors shadow-lg shadow-emerald-500/20"
+          >
+            <Video className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
