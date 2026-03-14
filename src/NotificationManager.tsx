@@ -3,7 +3,7 @@ import { collection, query, where, onSnapshot, doc, getDoc, orderBy, limit } fro
 import { db } from './firebase';
 import { useAuth } from './AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Video, PhoneOff } from 'lucide-react';
+import { Video, PhoneOff, MessageSquare, X } from 'lucide-react';
 
 export default function NotificationManager() {
   const { user } = useAuth();
@@ -15,6 +15,7 @@ export default function NotificationManager() {
   const notifiedCalls = useRef<Set<string>>(new Set());
   
   const [incomingCall, setIncomingCall] = useState<{chatId: string, callerName: string, callId: string} | null>(null);
+  const [incomingSwap, setIncomingSwap] = useState<{chatId: string, senderName: string, msgId: string} | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -49,14 +50,31 @@ export default function NotificationManager() {
                 notifiedMessages.current.add(msgId);
                 
                 // Don't notify for old messages (e.g., loaded on initial mount)
-                // We check if the message is newer than 5 seconds ago
-                if (Date.now() - msgData.timestamp < 5000) {
+                // We check if the message is newer than 15 seconds ago
+                if (Date.now() - msgData.timestamp < 15000) {
                   const userDoc = await getDoc(doc(db, 'users', otherUid));
                   const senderName = userDoc.exists() ? userDoc.data().name : 'Someone';
                   
+                  if (msgData.type === 'swap_started' && !location.pathname.includes(`/chat/${otherUid}`)) {
+                    setIncomingSwap({ chatId, senderName, msgId });
+                    
+                    // Auto-dismiss the swap notification after 10 seconds
+                    setTimeout(() => {
+                      setIncomingSwap(prev => prev?.msgId === msgId ? null : prev);
+                    }, 10000);
+                  }
+                  
                   if ('Notification' in window && Notification.permission === 'granted') {
-                    new Notification(`New message from ${senderName}`, {
-                      body: msgData.text.includes('https://meet.jit.si/') ? '🎥 Video Call Link' : msgData.text,
+                    let title = `New message from ${senderName}`;
+                    let body = msgData.text.includes('https://meet.jit.si/') ? '🎥 Video Call Link' : msgData.text;
+                    
+                    if (msgData.type === 'swap_started') {
+                      title = `🚀 Swap Started!`;
+                      body = `${senderName} is ready for your scheduled swap.`;
+                    }
+                    
+                    new Notification(title, {
+                      body,
                       icon: '/favicon.ico'
                     });
                   }
@@ -115,40 +133,69 @@ export default function NotificationManager() {
     };
   }, [user, location.pathname]);
 
-  if (!incomingCall) return null;
+  if (!incomingCall && !incomingSwap) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[9999] p-4 animate-in slide-in-from-top-4 fade-in duration-300 pointer-events-none">
-      <div className="bg-[#1a1a1a] border border-white/10 p-4 rounded-2xl shadow-2xl flex items-center gap-3 sm:gap-4 w-full max-w-md mx-auto pointer-events-auto">
-        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-500/20 rounded-full flex items-center justify-center animate-pulse shrink-0">
-          <Video className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+    <div className="fixed top-0 left-0 right-0 z-[9999] p-4 flex flex-col gap-2 pointer-events-none">
+      {incomingCall && (
+        <div className="bg-[#1a1a1a] border border-white/10 p-4 rounded-2xl shadow-2xl flex items-center gap-3 sm:gap-4 w-full max-w-md mx-auto pointer-events-auto animate-in slide-in-from-top-4 fade-in duration-300">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-500/20 rounded-full flex items-center justify-center animate-pulse shrink-0">
+            <Video className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-white font-medium truncate">{incomingCall.callerName}</h4>
+            <p className="text-white/60 text-sm truncate">Incoming video call...</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button 
+              onClick={() => setIncomingCall(null)}
+              className="w-10 h-10 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-full flex items-center justify-center transition-colors"
+            >
+              <PhoneOff className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={() => {
+                setIncomingCall(null);
+                const otherUid = incomingCall.chatId.replace(user?.uid || '', '').replace('_', '');
+                navigate(`/chat/${otherUid}`);
+              }}
+              className="w-10 h-10 bg-emerald-500 text-white hover:bg-emerald-600 rounded-full flex items-center justify-center transition-colors shadow-lg shadow-emerald-500/20"
+            >
+              <Video className="w-5 h-5" />
+            </button>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <h4 className="text-white font-medium truncate">{incomingCall.callerName}</h4>
-          <p className="text-white/60 text-sm truncate">Incoming video call...</p>
+      )}
+
+      {incomingSwap && (
+        <div className="bg-[#1a1a1a] border border-white/10 p-4 rounded-2xl shadow-2xl flex items-center gap-3 sm:gap-4 w-full max-w-md mx-auto pointer-events-auto animate-in slide-in-from-top-4 fade-in duration-300">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500/20 rounded-full flex items-center justify-center animate-bounce shrink-0">
+            <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-white font-medium truncate">🚀 Swap Started!</h4>
+            <p className="text-white/60 text-sm truncate">{incomingSwap.senderName} is ready.</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button 
+              onClick={() => setIncomingSwap(null)}
+              className="w-10 h-10 bg-white/5 text-white/40 hover:bg-white/10 hover:text-white rounded-full flex items-center justify-center transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={() => {
+                setIncomingSwap(null);
+                const otherUid = incomingSwap.chatId.replace(user?.uid || '', '').replace('_', '');
+                navigate(`/chat/${otherUid}`);
+              }}
+              className="px-4 h-10 bg-blue-500 text-white hover:bg-blue-600 rounded-xl flex items-center justify-center transition-colors shadow-lg shadow-blue-500/20 font-medium text-sm"
+            >
+              Join
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button 
-            onClick={() => setIncomingCall(null)}
-            className="w-10 h-10 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-full flex items-center justify-center transition-colors"
-          >
-            <PhoneOff className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={() => {
-              setIncomingCall(null);
-              // We need to navigate to the chat room. The chat room URL is /chat/:uid
-              // But we only have chatId here. The chatId is `${uid1}_${uid2}`.
-              // We can extract the other user's uid from the chatId.
-              const otherUid = incomingCall.chatId.replace(user?.uid || '', '').replace('_', '');
-              navigate(`/chat/${otherUid}`);
-            }}
-            className="w-10 h-10 bg-emerald-500 text-white hover:bg-emerald-600 rounded-full flex items-center justify-center transition-colors shadow-lg shadow-emerald-500/20"
-          >
-            <Video className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

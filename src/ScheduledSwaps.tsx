@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { useAuth } from './AuthContext';
 import { CalendarClock, Video, MapPin, Phone, MessageSquare, ArrowLeft, Play } from 'lucide-react';
@@ -65,12 +65,23 @@ export default function ScheduledSwaps() {
       // Create a chat ID (consistent with how it's done in ChatList/Chat)
       const chatId = [user.uid, otherUserId].sort().join('_');
       
+      // Ensure the chat document exists so the other user's NotificationManager can pick it up
+      const chatRef = doc(db, 'chats', chatId);
+      const chatSnap = await getDoc(chatRef);
+      if (!chatSnap.exists()) {
+        await setDoc(chatRef, {
+          participants: [user.uid, otherUserId],
+          createdAt: Date.now()
+        });
+      }
+
       // Send a notification message in the chat
       await addDoc(collection(db, 'chats', chatId, 'messages'), {
         text: `🚀 I'm ready to start our scheduled ${swap.swapType} swap! Let's go!`,
         senderId: user.uid,
         timestamp: Date.now(),
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        type: 'swap_started'
       });
       
       // Navigate to the chat
