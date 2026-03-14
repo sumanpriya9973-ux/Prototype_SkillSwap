@@ -154,11 +154,11 @@ export default function ScheduledSwaps() {
                   </div>
                 </div>
                 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto mt-4 sm:mt-0 shrink-0">
                   <button 
                     onClick={() => otherUserId && handleStartSwap(swap, otherUserId)}
                     disabled={swap.createdBy === user?.uid || startingSwapId === swap.id}
-                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors text-center ${
+                    className={`order-2 sm:order-1 w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-colors text-center ${
                       swap.createdBy === user?.uid 
                         ? 'bg-white/5 text-white/30 cursor-not-allowed' 
                         : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
@@ -168,18 +168,20 @@ export default function ScheduledSwaps() {
                     <Play className="w-4 h-4" />
                     {startingSwapId === swap.id ? 'Starting...' : 'Start Swap'}
                   </button>
-                  <button 
-                    onClick={() => navigate(`/chat/${otherUserId}`)}
-                    className="flex-1 sm:flex-none px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-medium transition-colors text-center"
-                  >
-                    Message
-                  </button>
-                  <button 
-                    onClick={() => navigate(`/profile/${otherUserId}`)}
-                    className="flex-1 sm:flex-none px-4 py-2 bg-white text-black hover:bg-gray-200 rounded-xl text-sm font-medium transition-colors text-center"
-                  >
-                    Profile
-                  </button>
+                  <div className="order-1 sm:order-2 flex gap-2 sm:gap-3 w-full sm:w-auto">
+                    <button 
+                      onClick={() => navigate(`/chat/${otherUserId}`)}
+                      className="order-2 sm:order-1 flex-1 sm:flex-none px-3 sm:px-4 py-2.5 sm:py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-medium transition-colors text-center"
+                    >
+                      Message
+                    </button>
+                    <button 
+                      onClick={() => navigate(`/profile/${otherUserId}`)}
+                      className="order-1 sm:order-2 flex-1 sm:flex-none px-3 sm:px-4 py-2.5 sm:py-2 bg-white text-black hover:bg-gray-200 rounded-xl text-sm font-medium transition-colors text-center"
+                    >
+                      Profile
+                    </button>
+                  </div>
                 </div>
               </div>
             );
