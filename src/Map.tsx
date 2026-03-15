@@ -77,6 +77,7 @@ function RoutingControl({ start, end, onRouteFound, transportMode }: { start: [n
       routeWhileDragging: false,
       fitSelectedRoutes: true,
       showAlternatives: false,
+      // @ts-ignore
       createMarker: () => null // don't create extra markers for waypoints
     }).addTo(map);
 

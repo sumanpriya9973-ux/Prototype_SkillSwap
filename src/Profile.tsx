@@ -4,7 +4,7 @@ import { MapPin, User, Mail, MessageCircle, Edit2, Coins, ChevronRight, Star, Sh
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
-import EmojiPicker from 'emoji-picker-react';
+import EmojiPicker, { Theme } from 'emoji-picker-react';
 
 export default function Profile() {
   const { profile, updateProfile } = useAuth();
@@ -109,7 +109,7 @@ export default function Profile() {
                       updateProfile({ photoURL: emojiData.emoji });
                       setShowEmojiPicker(false);
                     }}
-                    theme="dark"
+                    theme={Theme.DARK}
                   />
                 </div>
               </div>
